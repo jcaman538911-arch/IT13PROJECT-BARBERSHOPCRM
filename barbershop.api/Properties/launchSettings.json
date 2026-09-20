@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "barbershop.api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:16675;http://localhost:16676"
+    }
+  }
+}

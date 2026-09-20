@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="barbershop.api/barbershop.api.csproj" />
+  <Project Path="barbershop.domain/barbershop.domain.csproj" />
+  <Project Path="barbershop.infrastructure/barbershop.infrastructure.csproj" />
+  <Project Path="barbershopcrm.winform/barbershopcrm.winform.csproj" />
+</Solution>
