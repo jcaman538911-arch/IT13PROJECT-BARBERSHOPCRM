@@ -12,6 +12,7 @@ public partial class TechnicalSupportForm : Form
     public TechnicalSupportForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvSupportTickets);
         LoadTickets();
     }

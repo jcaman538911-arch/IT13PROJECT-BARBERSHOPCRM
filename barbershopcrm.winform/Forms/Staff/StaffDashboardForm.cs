@@ -14,6 +14,7 @@ public partial class StaffDashboardForm : Form
     public StaffDashboardForm(MainForm? mainShell = null)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _mainShell = mainShell;
         ThemeHelper.ApplyModernGrid(dgvTodayQueue);
         LoadMetrics();

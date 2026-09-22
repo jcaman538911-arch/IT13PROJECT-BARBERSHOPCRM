@@ -11,6 +11,7 @@ public partial class SystemAccessForm : Form
     public SystemAccessForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvAccessLogs);
         LoadLogs();
     }

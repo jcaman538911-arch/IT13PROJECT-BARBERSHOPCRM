@@ -15,6 +15,7 @@ public partial class StockTransactionForm : Form
     public StockTransactionForm(User currentUser)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _currentUser = currentUser;
         ThemeHelper.ApplyModernGrid(dgvCurrentStock);
         ThemeHelper.ApplyModernGrid(dgvStockHistory);

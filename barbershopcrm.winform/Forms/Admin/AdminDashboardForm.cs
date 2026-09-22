@@ -14,6 +14,7 @@ public partial class AdminDashboardForm : Form
     public AdminDashboardForm(MainForm? mainShell = null)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _mainShell = mainShell;
         ThemeHelper.ApplyModernGrid(dgvRecentTransactions);
         LoadDashboardMetrics();

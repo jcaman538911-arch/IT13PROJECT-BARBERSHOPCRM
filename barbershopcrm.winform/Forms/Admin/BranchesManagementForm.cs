@@ -15,6 +15,7 @@ public partial class BranchesManagementForm : Form
     public BranchesManagementForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvBranches);
         LoadBranches();
     }

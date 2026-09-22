@@ -130,7 +130,10 @@ public static class ThemeHelper
         dgv.AlternatingRowsDefaultCellStyle.SelectionBackColor = MutedGold;
         dgv.AlternatingRowsDefaultCellStyle.SelectionForeColor = DeepCharcoal;
 
-        dgv.RowTemplate.Height = 35;
+        dgv.RowTemplate.Height = 38;
+        dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+        dgv.AllowUserToResizeRows = false;
+        dgv.AllowUserToResizeColumns = true;
         dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         dgv.MultiSelect = false;
         dgv.AllowUserToAddRows = false;

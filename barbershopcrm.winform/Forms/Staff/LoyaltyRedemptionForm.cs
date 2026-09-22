@@ -15,6 +15,7 @@ public partial class LoyaltyRedemptionForm : Form
     public LoyaltyRedemptionForm(Customer? customer)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _customer = customer;
         ThemeHelper.ApplyModernGrid(dgvRewards);
         LoadCustomerRewards();

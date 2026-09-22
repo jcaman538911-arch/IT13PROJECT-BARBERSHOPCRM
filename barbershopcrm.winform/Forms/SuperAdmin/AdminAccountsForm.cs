@@ -12,6 +12,7 @@ public partial class AdminAccountsForm : Form
     public AdminAccountsForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvAdminAccounts);
         LoadAdminAccounts();
     }

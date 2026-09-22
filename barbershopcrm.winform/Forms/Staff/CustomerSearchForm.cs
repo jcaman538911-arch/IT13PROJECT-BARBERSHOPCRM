@@ -15,6 +15,7 @@ public partial class CustomerSearchForm : Form
     public CustomerSearchForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvResults);
         LoadCustomers();
     }

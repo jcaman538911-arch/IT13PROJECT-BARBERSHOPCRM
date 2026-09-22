@@ -23,9 +23,13 @@ partial class CustomerHistoryForm
         lblCustomer = new Label();
         cmbCustomers = new ComboBox();
         btnFilter = new Button();
+        lblLoyaltySummary = new Label();
         dgvHistory = new DataGridView();
+        lblLoyaltyActivityTitle = new Label();
+        dgvLoyalty = new DataGridView();
         pnlHeader.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvHistory).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)dgvLoyalty).BeginInit();
         SuspendLayout();
         // 
         // pnlHeader
@@ -33,6 +37,7 @@ partial class CustomerHistoryForm
         pnlHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         pnlHeader.BackColor = ThemeHelper.CardBackground;
         pnlHeader.BorderStyle = BorderStyle.FixedSingle;
+        pnlHeader.Controls.Add(lblLoyaltySummary);
         pnlHeader.Controls.Add(btnFilter);
         pnlHeader.Controls.Add(cmbCustomers);
         pnlHeader.Controls.Add(lblCustomer);
@@ -80,14 +85,47 @@ partial class CustomerHistoryForm
         btnFilter.UseVisualStyleBackColor = false;
         btnFilter.Click += btnFilter_Click;
         // 
+        // lblLoyaltySummary
+        // 
+        lblLoyaltySummary.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        lblLoyaltySummary.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        lblLoyaltySummary.ForeColor = ThemeHelper.PrimaryNavy;
+        lblLoyaltySummary.Location = new Point(590, 12);
+        lblLoyaltySummary.Name = "lblLoyaltySummary";
+        lblLoyaltySummary.Size = new Size(375, 40);
+        lblLoyaltySummary.TabIndex = 3;
+        lblLoyaltySummary.Text = "";
+        lblLoyaltySummary.TextAlign = ContentAlignment.MiddleRight;
+        // 
         // dgvHistory
         // 
         dgvHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         dgvHistory.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
         dgvHistory.Location = new Point(20, 90);
         dgvHistory.Name = "dgvHistory";
-        dgvHistory.Size = new Size(980, 530);
+        dgvHistory.Size = new Size(980, 320);
         dgvHistory.TabIndex = 1;
+        // 
+        // lblLoyaltyActivityTitle
+        // 
+        lblLoyaltyActivityTitle.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        lblLoyaltyActivityTitle.AutoSize = true;
+        lblLoyaltyActivityTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        lblLoyaltyActivityTitle.ForeColor = ThemeHelper.PrimaryNavy;
+        lblLoyaltyActivityTitle.Location = new Point(20, 418);
+        lblLoyaltyActivityTitle.Name = "lblLoyaltyActivityTitle";
+        lblLoyaltyActivityTitle.Size = new Size(171, 19);
+        lblLoyaltyActivityTitle.TabIndex = 2;
+        lblLoyaltyActivityTitle.Text = "Recent Loyalty Activity";
+        // 
+        // dgvLoyalty
+        // 
+        dgvLoyalty.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        dgvLoyalty.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        dgvLoyalty.Location = new Point(20, 442);
+        dgvLoyalty.Name = "dgvLoyalty";
+        dgvLoyalty.Size = new Size(980, 178);
+        dgvLoyalty.TabIndex = 3;
         // 
         // CustomerHistoryForm
         // 
@@ -95,6 +133,8 @@ partial class CustomerHistoryForm
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = ThemeHelper.WarmCanvas;
         ClientSize = new Size(1020, 640);
+        Controls.Add(dgvLoyalty);
+        Controls.Add(lblLoyaltyActivityTitle);
         Controls.Add(dgvHistory);
         Controls.Add(pnlHeader);
         FormBorderStyle = FormBorderStyle.None;
@@ -103,6 +143,7 @@ partial class CustomerHistoryForm
         pnlHeader.ResumeLayout(false);
         pnlHeader.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dgvHistory).EndInit();
+        ((System.ComponentModel.ISupportInitialize)dgvLoyalty).EndInit();
         ResumeLayout(false);
     }
 
@@ -112,5 +153,8 @@ partial class CustomerHistoryForm
     private Label lblCustomer;
     private ComboBox cmbCustomers;
     private Button btnFilter;
+    private Label lblLoyaltySummary;
     private DataGridView dgvHistory;
+    private Label lblLoyaltyActivityTitle;
+    private DataGridView dgvLoyalty;
 }

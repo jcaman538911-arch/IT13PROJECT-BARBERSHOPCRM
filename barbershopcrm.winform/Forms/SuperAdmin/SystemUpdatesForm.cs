@@ -1,3 +1,4 @@
+using BarberShopCRM.Helpers;
 using System;
 using System.Windows.Forms;
 using barbershop.infrastructure;
@@ -9,6 +10,7 @@ public partial class SystemUpdatesForm : Form
     public SystemUpdatesForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
     }
 
     private void btnCheckUpdates_Click(object sender, EventArgs e)

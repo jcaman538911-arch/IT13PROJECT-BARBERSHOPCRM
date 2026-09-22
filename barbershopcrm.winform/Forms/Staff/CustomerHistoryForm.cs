@@ -12,7 +12,9 @@ public partial class CustomerHistoryForm : Form
     public CustomerHistoryForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvHistory);
+        ThemeHelper.ApplyModernGrid(dgvLoyalty);
         PopulateCustomers();
     }
 
@@ -42,6 +44,36 @@ public partial class CustomerHistoryForm : Form
             FinalPaid = $"₱{h.FinalAmount:N2}",
             h.PaymentMethod,
             PaymentStatus = h.Status.ToString()
+        }).ToList();
+
+        LoadLoyaltyInfo(customerId);
+    }
+
+    private void LoadLoyaltyInfo(int customerId)
+    {
+        var customer = SqlDataRepository.Instance.GetCustomerById(customerId);
+        if (customer == null)
+        {
+            lblLoyaltySummary.Text = "";
+            dgvLoyalty.DataSource = null;
+            return;
+        }
+
+        int rewardCount = customer.IsLoyaltyMember
+            ? SqlDataRepository.Instance.GetLoyaltyRewards().Count(r => r.IsActive && customer.LoyaltyPoints >= r.PointsRequired)
+            : 0;
+        lblLoyaltySummary.Text = customer.IsLoyaltyMember
+            ? $"Loyalty Member  |  Points: {customer.LoyaltyPoints}  |  {rewardCount} reward(s) available"
+            : "Not a Loyalty Member";
+
+        var loyalty = SqlDataRepository.Instance.GetLoyaltyHistory(customerId);
+        dgvLoyalty.DataSource = loyalty.Select(l => new
+        {
+            Date = l.DateCreated.ToString("yyyy-MM-dd HH:mm"),
+            Activity = l.PointsEarned > 0 && l.PointsRedeemed > 0 ? "EARNED+REDEEMED" : l.PointsEarned > 0 ? "EARNED" : "REDEEMED",
+            Points = l.PointsEarned > 0 ? $"+{l.PointsEarned}" : $"-{l.PointsRedeemed}",
+            l.Description,
+            l.RecordedBy
         }).ToList();
     }
 

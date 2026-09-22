@@ -12,6 +12,7 @@ public partial class BarberAttendanceManagementForm : Form
     public BarberAttendanceManagementForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvAttendance);
         cmbStatusFilter.SelectedIndex = 0;
         LoadAttendance();

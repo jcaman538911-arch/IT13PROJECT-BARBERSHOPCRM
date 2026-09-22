@@ -33,6 +33,7 @@ partial class ServiceTransactionForm
         cmbPromotion = new ComboBox();
         lblLoyaltyRewardHeader = new Label();
         cmbLoyaltyReward = new ComboBox();
+        lblLoyaltyInfo = new Label();
         pnlSummary = new Panel();
         lblSummaryTitle = new Label();
         lblSubtotalLabel = new Label();
@@ -67,6 +68,7 @@ partial class ServiceTransactionForm
         pnlWorkflow.Controls.Add(cmbPromotion);
         pnlWorkflow.Controls.Add(lblLoyaltyRewardHeader);
         pnlWorkflow.Controls.Add(cmbLoyaltyReward);
+        pnlWorkflow.Controls.Add(lblLoyaltyInfo);
         pnlWorkflow.Location = new Point(20, 20);
         pnlWorkflow.Name = "pnlWorkflow";
         pnlWorkflow.Size = new Size(340, 595);
@@ -226,6 +228,18 @@ partial class ServiceTransactionForm
         cmbLoyaltyReward.Size = new Size(310, 23);
         cmbLoyaltyReward.TabIndex = 12;
         cmbLoyaltyReward.SelectedIndexChanged += cmbLoyaltyReward_SelectedIndexChanged;
+        // 
+        // lblLoyaltyInfo
+        // 
+        lblLoyaltyInfo.BackColor = ThemeHelper.CardHeaderBg;
+        lblLoyaltyInfo.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
+        lblLoyaltyInfo.ForeColor = ThemeHelper.TextSecondary;
+        lblLoyaltyInfo.Location = new Point(15, 375);
+        lblLoyaltyInfo.Name = "lblLoyaltyInfo";
+        lblLoyaltyInfo.Padding = new Padding(6, 4, 6, 4);
+        lblLoyaltyInfo.Size = new Size(310, 55);
+        lblLoyaltyInfo.TabIndex = 13;
+        lblLoyaltyInfo.Text = "Register customer to start earning loyalty points.";
         // 
         // pnlSummary
         // 
@@ -414,6 +428,7 @@ partial class ServiceTransactionForm
     private ComboBox cmbPromotion;
     private Label lblLoyaltyRewardHeader;
     private ComboBox cmbLoyaltyReward;
+    private Label lblLoyaltyInfo;
     private Panel pnlSummary;
     private Label lblSummaryTitle;
     private Label lblSubtotalLabel;

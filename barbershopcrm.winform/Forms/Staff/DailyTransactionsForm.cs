@@ -11,6 +11,7 @@ public partial class DailyTransactionsForm : Form
     public DailyTransactionsForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvTransactions);
         LoadTransactions();
     }

@@ -1,3 +1,4 @@
+using BarberShopCRM.Helpers;
 using System;
 using System.Windows.Forms;
 using barbershop.infrastructure;
@@ -9,6 +10,7 @@ public partial class SystemMaintenanceForm : Form
     public SystemMaintenanceForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         LogConsole("System Maintenance Console initialized ready for operation.");
     }
 

@@ -219,10 +219,21 @@ BEGIN
         TransactionID INT NULL FOREIGN KEY REFERENCES Transactions(TransactionID),
         PointsEarned INT NOT NULL DEFAULT 0,
         PointsRedeemed INT NOT NULL DEFAULT 0,
+        ActivityType NVARCHAR(20) NOT NULL DEFAULT 'EARNED', -- EARNED, REDEEMED, ADJUSTED
+        PreviousBalance INT NOT NULL DEFAULT 0,
+        NewBalance INT NOT NULL DEFAULT 0,
         Description NVARCHAR(255) NULL,
         DateCreated DATETIME NOT NULL DEFAULT GETDATE(),
         RecordedBy NVARCHAR(100) NULL
     );
+END
+GO
+
+-- One loyalty record per transaction: prevents duplicate point awards.
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_LoyaltyTransactions_TransactionID')
+BEGIN
+    CREATE UNIQUE NONCLUSTERED INDEX UX_LoyaltyTransactions_TransactionID
+        ON LoyaltyTransactions(TransactionID) WHERE TransactionID IS NOT NULL;
 END
 GO
 

@@ -56,6 +56,8 @@ public interface ISqlDataRepository
     List<Transaction> GetCustomerTransactions(int customerId);
     string GenerateTransactionNumber();
     void SaveTransaction(Transaction txn);
+    List<LoyaltyHistoryEntry> GetLoyaltyHistory(int customerId);
+    List<LoyaltyHistoryEntry> GetAllLoyaltyHistory();
 
     // Inventory
     List<InventoryItem> GetInventoryItems();

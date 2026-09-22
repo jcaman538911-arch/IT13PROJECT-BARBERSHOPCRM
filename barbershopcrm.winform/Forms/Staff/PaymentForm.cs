@@ -1,3 +1,4 @@
+using BarberShopCRM.Helpers;
 using System;
 using System.Windows.Forms;
 using barbershop.domain;
@@ -11,6 +12,7 @@ public partial class PaymentForm : Form
     public PaymentForm(Transaction transaction)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         CompletedTransaction = transaction;
         PopulatePaymentMethods();
         LoadSummary();

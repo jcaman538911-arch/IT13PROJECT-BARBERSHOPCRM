@@ -15,6 +15,7 @@ public partial class InventoryManagementForm : Form
     public InventoryManagementForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvInventory);
         PopulateSuppliers();
         LoadInventory();
