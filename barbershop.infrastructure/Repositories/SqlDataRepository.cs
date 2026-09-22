@@ -24,6 +24,9 @@ public class SqlDataRepository : ISqlDataRepository
         }
     }
 
+    private static T GetOrDefault<T>(SqlDataReader reader, string column, T fallback)
+        => reader.IsDBNull(reader.GetOrdinal(column)) ? fallback : reader.GetFieldValue<T>(reader.GetOrdinal(column));
+
     // --- Authentication ---
     public User? Authenticate(string username, string password)
     {
@@ -797,33 +800,33 @@ public class SqlDataRepository : ISqlDataRepository
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
         {
-            Enum.TryParse<PaymentMethod>(reader.GetString(reader.GetOrdinal("PaymentMethod")), true, out var pm);
-            Enum.TryParse<TransactionStatus>(reader.GetString(reader.GetOrdinal("Status")), true, out var st);
+            Enum.TryParse<PaymentMethod>(GetOrDefault(reader, "PaymentMethod", ""), true, out var pm);
+            Enum.TryParse<TransactionStatus>(GetOrDefault(reader, "Status", ""), true, out var st);
 
             list.Add(new Transaction
             {
                 Id = reader.GetInt32(reader.GetOrdinal("TransactionID")),
-                TransactionNumber = reader.GetString(reader.GetOrdinal("TransactionNumber")),
-                CustomerId = reader.IsDBNull(reader.GetOrdinal("CustomerID")) ? null : reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
-                StaffId = reader.GetInt32(reader.GetOrdinal("StaffID")),
-                StaffName = reader.GetString(reader.GetOrdinal("StaffName")),
-                BarberId = reader.GetInt32(reader.GetOrdinal("BarberID")),
-                BarberName = reader.GetString(reader.GetOrdinal("BarberName")),
-                ServiceId = reader.IsDBNull(reader.GetOrdinal("ServiceID")) ? 1 : reader.GetInt32(reader.GetOrdinal("ServiceID")),
-                ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
-                Subtotal = reader.GetDecimal(reader.GetOrdinal("Subtotal")),
-                DiscountAmount = reader.GetDecimal(reader.GetOrdinal("DiscountAmount")),
-                FinalAmount = reader.GetDecimal(reader.GetOrdinal("FinalAmount")),
+                TransactionNumber = GetOrDefault(reader, "TransactionNumber", ""),
+                CustomerId = GetOrDefault<int?>(reader, "CustomerID", null),
+                CustomerName = GetOrDefault(reader, "CustomerName", "Walk-in Customer"),
+                StaffId = GetOrDefault(reader, "StaffID", 0),
+                StaffName = GetOrDefault(reader, "StaffName", ""),
+                BarberId = GetOrDefault(reader, "BarberID", 0),
+                BarberName = GetOrDefault(reader, "BarberName", ""),
+                ServiceId = GetOrDefault(reader, "ServiceID", 1),
+                ServiceName = GetOrDefault(reader, "ServiceName", ""),
+                Subtotal = GetOrDefault(reader, "Subtotal", 0m),
+                DiscountAmount = GetOrDefault(reader, "DiscountAmount", 0m),
+                FinalAmount = GetOrDefault(reader, "FinalAmount", 0m),
                 PaymentMethod = pm,
                 Status = st,
-                PromotionId = reader.IsDBNull(reader.GetOrdinal("PromotionID")) ? null : reader.GetInt32(reader.GetOrdinal("PromotionID")),
-                LoyaltyRewardId = reader.IsDBNull(reader.GetOrdinal("LoyaltyRewardID")) ? null : reader.GetInt32(reader.GetOrdinal("LoyaltyRewardID")),
-                PointsEarned = reader.GetInt32(reader.GetOrdinal("PointsEarned")),
-                PointsRedeemed = reader.GetInt32(reader.GetOrdinal("PointsRedeemed")),
-                AmountReceived = reader.GetDecimal(reader.GetOrdinal("AmountReceived")),
-                ChangeAmount = reader.GetDecimal(reader.GetOrdinal("ChangeAmount")),
-                TransactionDate = reader.GetDateTime(reader.GetOrdinal("TransactionDate"))
+                PromotionId = GetOrDefault<int?>(reader, "PromotionID", null),
+                LoyaltyRewardId = GetOrDefault<int?>(reader, "LoyaltyRewardID", null),
+                PointsEarned = GetOrDefault(reader, "PointsEarned", 0),
+                PointsRedeemed = GetOrDefault(reader, "PointsRedeemed", 0),
+                AmountReceived = GetOrDefault(reader, "AmountReceived", 0m),
+                ChangeAmount = GetOrDefault(reader, "ChangeAmount", 0m),
+                TransactionDate = GetOrDefault(reader, "TransactionDate", DateTime.Now)
             });
         }
         return list;
