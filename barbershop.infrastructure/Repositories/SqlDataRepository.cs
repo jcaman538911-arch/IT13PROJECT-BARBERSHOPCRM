@@ -1559,20 +1559,56 @@ public class SqlDataRepository : ISqlDataRepository
             if (_appointmentSchemaEnsured) return;
             string sql = @"
                 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appointments')
-                CREATE TABLE Appointments (
-                    AppointmentID INT IDENTITY(1,1) PRIMARY KEY,
-                    AppointmentNumber NVARCHAR(50) NOT NULL,
-                    CustomerID INT NOT NULL,
-                    CustomerName NVARCHAR(100) NOT NULL,
-                    ServiceID INT NULL,
-                    ServiceName NVARCHAR(100) NOT NULL,
-                    BarberID INT NULL,
-                    BarberName NVARCHAR(100) NOT NULL,
-                    ScheduledAt DATETIME NOT NULL,
-                    Status NVARCHAR(20) NOT NULL DEFAULT 'Scheduled',
-                    Notes NVARCHAR(255) NULL,
-                    CreatedDate DATETIME NOT NULL DEFAULT GETDATE()
-                );";
+                BEGIN
+                    CREATE TABLE Appointments (
+                        AppointmentID INT IDENTITY(1,1) PRIMARY KEY,
+                        AppointmentNumber NVARCHAR(50) NOT NULL,
+                        CustomerID INT NOT NULL,
+                        CustomerName NVARCHAR(100) NOT NULL,
+                        ServiceID INT NULL,
+                        ServiceName NVARCHAR(100) NOT NULL,
+                        BarberID INT NULL,
+                        BarberName NVARCHAR(100) NOT NULL,
+                        ScheduledAt DATETIME NOT NULL,
+                        Status NVARCHAR(20) NOT NULL DEFAULT 'Scheduled',
+                        Notes NVARCHAR(255) NULL,
+                        CreatedDate DATETIME NOT NULL DEFAULT GETDATE()
+                    );
+                END
+                ELSE
+                BEGIN
+                    -- Upgrade a table created by an older build: add any missing
+                    -- columns and backfill from legacy column names where present.
+                    IF COL_LENGTH('Appointments','AppointmentNumber') IS NULL
+                        ALTER TABLE Appointments ADD AppointmentNumber NVARCHAR(50) NULL;
+                    IF COL_LENGTH('Appointments','CustomerID') IS NULL
+                        ALTER TABLE Appointments ADD CustomerID INT NULL;
+                    IF COL_LENGTH('Appointments','CustomerName') IS NULL
+                        ALTER TABLE Appointments ADD CustomerName NVARCHAR(100) NULL;
+                    IF COL_LENGTH('Appointments','ServiceID') IS NULL
+                        ALTER TABLE Appointments ADD ServiceID INT NULL;
+                    IF COL_LENGTH('Appointments','ServiceName') IS NULL
+                        ALTER TABLE Appointments ADD ServiceName NVARCHAR(100) NULL;
+                    IF COL_LENGTH('Appointments','BarberID') IS NULL
+                        ALTER TABLE Appointments ADD BarberID INT NULL;
+                    IF COL_LENGTH('Appointments','BarberName') IS NULL
+                        ALTER TABLE Appointments ADD BarberName NVARCHAR(100) NULL;
+                    IF COL_LENGTH('Appointments','ScheduledAt') IS NULL
+                        ALTER TABLE Appointments ADD ScheduledAt DATETIME NULL;
+                    IF COL_LENGTH('Appointments','Status') IS NULL
+                        ALTER TABLE Appointments ADD Status NVARCHAR(20) NULL;
+                    IF COL_LENGTH('Appointments','Notes') IS NULL
+                        ALTER TABLE Appointments ADD Notes NVARCHAR(255) NULL;
+                    IF COL_LENGTH('Appointments','CreatedDate') IS NULL
+                        ALTER TABLE Appointments ADD CreatedDate DATETIME NULL;
+                    IF COL_LENGTH('Appointments','AppointmentDate') IS NOT NULL
+                        EXEC('UPDATE Appointments SET ScheduledAt = AppointmentDate WHERE ScheduledAt IS NULL');
+                    IF COL_LENGTH('Appointments','CreatedAt') IS NOT NULL
+                        EXEC('UPDATE Appointments SET CreatedDate = CreatedAt WHERE CreatedDate IS NULL');
+                    EXEC('UPDATE Appointments SET AppointmentNumber = ''APT-'' + CAST(AppointmentID AS NVARCHAR(10)) WHERE AppointmentNumber IS NULL');
+                    EXEC('UPDATE Appointments SET ScheduledAt = GETDATE() WHERE ScheduledAt IS NULL');
+                    EXEC('UPDATE Appointments SET CreatedDate = GETDATE() WHERE CreatedDate IS NULL');
+                END";
             using var cmd = new SqlCommand(sql, conn);
             cmd.ExecuteNonQuery();
             _appointmentSchemaEnsured = true;
@@ -1595,17 +1631,17 @@ public class SqlDataRepository : ISqlDataRepository
             list.Add(new Appointment
             {
                 Id = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
-                AppointmentNumber = reader.GetString(reader.GetOrdinal("AppointmentNumber")),
-                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
-                ServiceId = reader.IsDBNull(reader.GetOrdinal("ServiceID")) ? 0 : reader.GetInt32(reader.GetOrdinal("ServiceID")),
-                ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
-                BarberId = reader.IsDBNull(reader.GetOrdinal("BarberID")) ? 0 : reader.GetInt32(reader.GetOrdinal("BarberID")),
-                BarberName = reader.GetString(reader.GetOrdinal("BarberName")),
-                ScheduledAt = reader.GetDateTime(reader.GetOrdinal("ScheduledAt")),
-                Status = Enum.TryParse(reader.GetString(reader.GetOrdinal("Status")), out AppointmentStatus st) ? st : AppointmentStatus.Scheduled,
-                Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? "" : reader.GetString(reader.GetOrdinal("Notes")),
-                CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
+                AppointmentNumber = GetOrDefault(reader, "AppointmentNumber", ""),
+                CustomerId = GetOrDefault(reader, "CustomerID", 0),
+                CustomerName = GetOrDefault(reader, "CustomerName", ""),
+                ServiceId = GetOrDefault(reader, "ServiceID", 0),
+                ServiceName = GetOrDefault(reader, "ServiceName", ""),
+                BarberId = GetOrDefault(reader, "BarberID", 0),
+                BarberName = GetOrDefault(reader, "BarberName", ""),
+                ScheduledAt = GetOrDefault(reader, "ScheduledAt", DateTime.Now),
+                Status = Enum.TryParse(GetOrDefault(reader, "Status", ""), out AppointmentStatus st) ? st : AppointmentStatus.Scheduled,
+                Notes = GetOrDefault(reader, "Notes", ""),
+                CreatedDate = GetOrDefault(reader, "CreatedDate", DateTime.Now)
             });
         }
         return list;
