@@ -9,13 +9,25 @@ namespace BarberShopCRM.Forms.Staff;
 
 public partial class CustomerHistoryForm : Form
 {
+    private Customer? _selectedCustomer;
+
     public CustomerHistoryForm()
     {
         InitializeComponent();
         ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvHistory);
         ThemeHelper.ApplyModernGrid(dgvLoyalty);
+        btnLoyaltyCard.Click += btnLoyaltyCard_Click;
         PopulateCustomers();
+    }
+
+    private void btnLoyaltyCard_Click(object? sender, EventArgs e)
+    {
+        if (_selectedCustomer is { IsLoyaltyMember: true } member)
+        {
+            using var card = new LoyaltyCardForm(member);
+            card.ShowDialog(this);
+        }
     }
 
     private void PopulateCustomers()
@@ -52,10 +64,12 @@ public partial class CustomerHistoryForm : Form
     private void LoadLoyaltyInfo(int customerId)
     {
         var customer = SqlDataRepository.Instance.GetCustomerById(customerId);
+        _selectedCustomer = customer;
         if (customer == null)
         {
             lblLoyaltySummary.Text = "";
             dgvLoyalty.DataSource = null;
+            btnLoyaltyCard.Visible = false;
             return;
         }
 
@@ -63,8 +77,9 @@ public partial class CustomerHistoryForm : Form
             ? SqlDataRepository.Instance.GetLoyaltyRewards().Count(r => r.IsActive && customer.LoyaltyPoints >= r.PointsRequired)
             : 0;
         lblLoyaltySummary.Text = customer.IsLoyaltyMember
-            ? $"Loyalty Member  |  Points: {customer.LoyaltyPoints}  |  {rewardCount} reward(s) available"
+            ? $"Loyalty Member {LoyaltyCardForm.FormatMemberId(customer.Id)}  |  Points: {customer.LoyaltyPoints}  |  {rewardCount} reward(s) available"
             : "Not a Loyalty Member";
+        btnLoyaltyCard.Visible = customer.IsLoyaltyMember;
 
         var loyalty = SqlDataRepository.Instance.GetLoyaltyHistory(customerId);
         dgvLoyalty.DataSource = loyalty.Select(l => new
@@ -72,6 +87,7 @@ public partial class CustomerHistoryForm : Form
             Date = l.DateCreated.ToString("yyyy-MM-dd HH:mm"),
             Activity = l.PointsEarned > 0 && l.PointsRedeemed > 0 ? "EARNED+REDEEMED" : l.PointsEarned > 0 ? "EARNED" : "REDEEMED",
             Points = l.PointsEarned > 0 ? $"+{l.PointsEarned}" : $"-{l.PointsRedeemed}",
+            BalanceAfter = l.NewBalance,
             l.Description,
             l.RecordedBy
         }).ToList();

@@ -24,8 +24,18 @@ public partial class ServiceTransactionForm : Form
         ResponsiveLayoutHelper.Apply(this);
         _currentUser = currentUser;
         ThemeHelper.ApplyModernGrid(dgvActiveTransactions);
+        lblLoyaltyInfo.Click += lblLoyaltyInfo_Click;
         PopulateDropdowns();
         LoadTodayTransactions();
+    }
+
+    private void lblLoyaltyInfo_Click(object? sender, EventArgs e)
+    {
+        if (_selectedCustomer is { IsLoyaltyMember: true } member)
+        {
+            using var card = new LoyaltyCardForm(member);
+            card.ShowDialog(this);
+        }
     }
 
     private void PopulateDropdowns()
@@ -107,13 +117,29 @@ public partial class ServiceTransactionForm : Form
 
     private void cmbPromotion_SelectedIndexChanged(object sender, EventArgs e)
     {
+        // A transaction carries either a business promotion or a points-funded reward, never both.
+        if (cmbPromotion.SelectedItem is Promotion promo && promo.Id > 0
+            && cmbLoyaltyReward.SelectedItem is LoyaltyReward reward && reward.Id > 0)
+        {
+            MessageBox.Show("Only one promotion or loyalty reward may be applied to this transaction.",
+                "Discount Conflict", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            cmbLoyaltyReward.SelectedIndex = 0;
+        }
         RecalculateTotals();
+        UpdateLoyaltyDisplay();
     }
 
     private void cmbLoyaltyReward_SelectedIndexChanged(object sender, EventArgs e)
     {
         if (cmbLoyaltyReward.SelectedItem is LoyaltyReward reward && reward.Id > 0)
         {
+            if (cmbPromotion.SelectedItem is Promotion activePromo && activePromo.Id > 0)
+            {
+                MessageBox.Show("Only one promotion or loyalty reward may be applied to this transaction.",
+                    "Discount Conflict", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbLoyaltyReward.SelectedIndex = 0;
+                return;
+            }
             if (_selectedCustomer == null || !_selectedCustomer.IsLoyaltyMember)
             {
                 MessageBox.Show("Loyalty rewards can only be redeemed by registered loyalty members.", "Loyalty Reward", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -156,8 +182,10 @@ public partial class ServiceTransactionForm : Form
         string extra = cmbLoyaltyReward.SelectedItem is LoyaltyReward r && r.Id > 0
             ? $"Redeeming '{r.RewardName}' (-{r.PointsRequired} pts)"
             : "Possible Earned Points: +10 after successful payment";
-        lblLoyaltyInfo.Text = $"{_selectedCustomer.FullName} - Loyalty Member\nCurrent Points: {_selectedCustomer.LoyaltyPoints}  |  {extra}";
+        lblLoyaltyInfo.Text = $"{_selectedCustomer.FullName} - Loyalty Member ({LoyaltyCardForm.FormatMemberId(_selectedCustomer.Id)})\n"
+                            + $"Current Points: {_selectedCustomer.LoyaltyPoints}  |  {extra}";
         lblLoyaltyInfo.ForeColor = ThemeHelper.PrimaryNavy;
+        lblLoyaltyInfo.Cursor = Cursors.Hand;
     }
 
     private void RecalculateTotals()

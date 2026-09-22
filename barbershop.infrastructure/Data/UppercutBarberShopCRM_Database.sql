@@ -332,6 +332,26 @@ BEGIN
 END
 GO
 
+-- 20. APPOINTMENTS TABLE
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appointments')
+BEGIN
+    CREATE TABLE Appointments (
+        AppointmentID INT IDENTITY(1,1) PRIMARY KEY,
+        AppointmentNumber NVARCHAR(50) NOT NULL,
+        CustomerID INT NOT NULL,
+        CustomerName NVARCHAR(100) NOT NULL,
+        ServiceID INT NULL,
+        ServiceName NVARCHAR(100) NOT NULL,
+        BarberID INT NULL,
+        BarberName NVARCHAR(100) NOT NULL,
+        ScheduledAt DATETIME NOT NULL,
+        Status NVARCHAR(20) NOT NULL DEFAULT 'Scheduled',
+        Notes NVARCHAR(255) NULL,
+        CreatedDate DATETIME NOT NULL DEFAULT GETDATE()
+    );
+END
+GO
+
 -- ============================================================
 -- INITIAL REFERENCE & SEED DATA
 -- ============================================================

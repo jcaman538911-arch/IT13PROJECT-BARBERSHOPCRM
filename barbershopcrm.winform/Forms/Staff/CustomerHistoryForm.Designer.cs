@@ -24,6 +24,7 @@ partial class CustomerHistoryForm
         cmbCustomers = new ComboBox();
         btnFilter = new Button();
         lblLoyaltySummary = new Label();
+        btnLoyaltyCard = new Button();
         dgvHistory = new DataGridView();
         lblLoyaltyActivityTitle = new Label();
         dgvLoyalty = new DataGridView();
@@ -37,6 +38,7 @@ partial class CustomerHistoryForm
         pnlHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         pnlHeader.BackColor = ThemeHelper.CardBackground;
         pnlHeader.BorderStyle = BorderStyle.FixedSingle;
+        pnlHeader.Controls.Add(btnLoyaltyCard);
         pnlHeader.Controls.Add(lblLoyaltySummary);
         pnlHeader.Controls.Add(btnFilter);
         pnlHeader.Controls.Add(cmbCustomers);
@@ -90,12 +92,27 @@ partial class CustomerHistoryForm
         lblLoyaltySummary.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         lblLoyaltySummary.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
         lblLoyaltySummary.ForeColor = ThemeHelper.PrimaryNavy;
-        lblLoyaltySummary.Location = new Point(590, 12);
+        lblLoyaltySummary.Location = new Point(520, 12);
         lblLoyaltySummary.Name = "lblLoyaltySummary";
-        lblLoyaltySummary.Size = new Size(375, 40);
+        lblLoyaltySummary.Size = new Size(320, 40);
         lblLoyaltySummary.TabIndex = 3;
         lblLoyaltySummary.Text = "";
         lblLoyaltySummary.TextAlign = ContentAlignment.MiddleRight;
+        //
+        // btnLoyaltyCard
+        //
+        btnLoyaltyCard.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        btnLoyaltyCard.BackColor = ThemeHelper.MutedGold;
+        btnLoyaltyCard.FlatStyle = FlatStyle.Flat;
+        btnLoyaltyCard.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        btnLoyaltyCard.ForeColor = ThemeHelper.DeepCharcoal;
+        btnLoyaltyCard.Location = new Point(850, 17);
+        btnLoyaltyCard.Name = "btnLoyaltyCard";
+        btnLoyaltyCard.Size = new Size(115, 30);
+        btnLoyaltyCard.TabIndex = 4;
+        btnLoyaltyCard.Text = "Loyalty Card";
+        btnLoyaltyCard.UseVisualStyleBackColor = false;
+        btnLoyaltyCard.Visible = false;
         // 
         // dgvHistory
         // 
@@ -154,6 +171,7 @@ partial class CustomerHistoryForm
     private ComboBox cmbCustomers;
     private Button btnFilter;
     private Label lblLoyaltySummary;
+    private Button btnLoyaltyCard;
     private DataGridView dgvHistory;
     private Label lblLoyaltyActivityTitle;
     private DataGridView dgvLoyalty;
