@@ -71,6 +71,6 @@ public partial class StaffDashboardForm : Form
 
     private void btnRecordAttendance_Click(object sender, EventArgs e)
     {
-        _mainShell?.NavigateTo("Barber Attendance");
+        _mainShell?.NavigateTo("Employee Attendance");
     }
 }

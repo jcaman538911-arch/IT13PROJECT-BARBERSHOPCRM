@@ -146,7 +146,7 @@ partial class StaffDashboardForm
         btnRecordAttendance.Name = "btnRecordAttendance";
         btnRecordAttendance.Size = new Size(215, 35);
         btnRecordAttendance.TabIndex = 5;
-        btnRecordAttendance.Text = "📋 Record Barber Attendance";
+        btnRecordAttendance.Text = "📋 Record Employee Attendance";
         btnRecordAttendance.UseVisualStyleBackColor = false;
         btnRecordAttendance.Click += btnRecordAttendance_Click;
         // 

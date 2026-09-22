@@ -918,9 +918,9 @@ public class SqlDataRepository : ISqlDataRepository
             cmd.Parameters.AddWithValue("@TxnNum", txn.TransactionNumber);
             cmd.Parameters.AddWithValue("@CustID", (object?)txn.CustomerId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@CustName", txn.CustomerName);
-            cmd.Parameters.AddWithValue("@StaffID", txn.StaffId > 0 ? txn.StaffId : 1);
+            cmd.Parameters.AddWithValue("@StaffID", txn.StaffId > 0 ? (object)txn.StaffId : DBNull.Value);
             cmd.Parameters.AddWithValue("@StaffName", txn.StaffName ?? "Staff");
-            cmd.Parameters.AddWithValue("@BarberID", txn.BarberId > 0 ? txn.BarberId : 1);
+            cmd.Parameters.AddWithValue("@BarberID", txn.BarberId > 0 ? (object)txn.BarberId : DBNull.Value);
             cmd.Parameters.AddWithValue("@BarberName", txn.BarberName ?? "Barber");
             cmd.Parameters.AddWithValue("@SvcID", (object?)txn.ServiceId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@SvcName", txn.ServiceName);

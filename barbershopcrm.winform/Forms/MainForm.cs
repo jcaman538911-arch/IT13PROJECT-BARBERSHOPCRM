@@ -134,7 +134,7 @@ public partial class MainForm : Form
                 Add("", "Dashboard", "🏠", () => OpenChildForm(new AdminDashboardForm(this), "Admin / Owner Dashboard"));
                 Add("PEOPLE", "Employees", "🧑‍🔧", () => OpenChildForm(new EmployeesForm(), "Employee Management (Barbers & Staff)"));
                 Add("PEOPLE", "Customers", "👥", () => OpenChildForm(new CustomersForm(), "Customer Management"));
-                Add("PEOPLE", "Barber Attendance", "📅", () => OpenChildForm(new BarberAttendanceManagementForm(), "Barber Attendance Management"));
+                Add("PEOPLE", "Employee Attendance", "📅", () => OpenChildForm(new BarberAttendanceManagementForm(), "Employee Attendance Management"));
                 Add("SERVICES & BENEFITS", "Services & Pricing", "✂️", () => OpenChildForm(new ServicesPricingForm(), "Services & Base Pricing"));
                 Add("SERVICES & BENEFITS", "Promotions", "🏷️", () => OpenChildForm(new PromotionsForm(CurrentUser.Role), "Promotions Management"));
                 Add("SERVICES & BENEFITS", "Loyalty Rewards", "🎁", () => OpenChildForm(new LoyaltyRewardsForm(CurrentUser.Role), "Loyalty & Rewards Program"));
@@ -159,7 +159,7 @@ public partial class MainForm : Form
                 Add("CUSTOMER BENEFITS", "Loyalty Rewards", "🎁", () => OpenChildForm(new LoyaltyRewardsForm(CurrentUser.Role), "Loyalty Rewards & Redemption"));
                 Add("SHOP OPERATIONS", "Inventory Availability", "📦", () => OpenChildForm(new StockTransactionForm(CurrentUser), "Inventory Availability & Tasks"),
                     badge: LowStockCount);
-                Add("SHOP OPERATIONS", "Barber Attendance", "📅", () => OpenChildForm(new RecordBarberAttendanceForm(), "Record Barber Attendance"));
+                Add("SHOP OPERATIONS", "Employee Attendance", "📅", () => OpenChildForm(new RecordBarberAttendanceForm(), "Record Employee Attendance"));
                 Add("SHOP OPERATIONS", "Branch Locations", "🏢", () => OpenChildForm(new BranchesManagementForm(), "Branch Locations"));
                 break;
         }

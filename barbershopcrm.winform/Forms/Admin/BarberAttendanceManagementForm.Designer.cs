@@ -139,7 +139,7 @@ partial class BarberAttendanceManagementForm
         Controls.Add(pnlHeader);
         FormBorderStyle = FormBorderStyle.None;
         Name = "BarberAttendanceManagementForm";
-        Text = "Barber Attendance Management";
+        Text = "Employee Attendance Management";
         pnlHeader.ResumeLayout(false);
         pnlHeader.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dgvAttendance).EndInit();

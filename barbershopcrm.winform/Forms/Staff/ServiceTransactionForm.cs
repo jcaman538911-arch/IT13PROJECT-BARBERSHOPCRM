@@ -278,7 +278,8 @@ public partial class ServiceTransactionForm : Form
         string? rewardName = rewardId.HasValue ? (cmbLoyaltyReward.SelectedItem as LoyaltyReward)?.RewardName : null;
         int pointsRedeemed = rewardId.HasValue ? (cmbLoyaltyReward.SelectedItem as LoyaltyReward)?.PointsRequired ?? 0 : 0;
 
-        int pointsEarned = (_selectedCustomer != null && _selectedCustomer.IsLoyaltyMember) ? 10 : 0;
+        // PointsEarned will be calculated automatically in PaymentForm
+        int pointsEarned = 0;
 
         var txn = new Transaction
         {
@@ -333,15 +334,29 @@ public partial class ServiceTransactionForm : Form
         sb.AppendLine($"Customer: {txn.CustomerName}");
         sb.AppendLine($"Final Amount: ₱{txn.FinalAmount:N2}");
 
-        if (txn.CustomerId.HasValue && txn.PointsEarned > 0)
+        if (txn.CustomerId.HasValue)
         {
             var customer = SqlDataRepository.Instance.GetCustomerById(txn.CustomerId.Value);
-            sb.AppendLine();
-            sb.AppendLine($"Loyalty Points Earned: +{txn.PointsEarned}");
-            if (txn.PointsRedeemed > 0)
-                sb.AppendLine($"Loyalty Points Redeemed: -{txn.PointsRedeemed}");
             if (customer != null)
-                sb.AppendLine($"New Loyalty Balance: {customer.LoyaltyPoints} points");
+            {
+                sb.AppendLine();
+                if (customer.IsLoyaltyMember)
+                {
+                    sb.AppendLine($"Loyalty Points Earned: +{txn.PointsEarned}");
+                    if (txn.PointsRedeemed > 0)
+                        sb.AppendLine($"Loyalty Points Redeemed: -{txn.PointsRedeemed}");
+                    sb.AppendLine($"New Loyalty Balance: {customer.LoyaltyPoints} points");
+                }
+                else
+                {
+                    sb.AppendLine($"Loyalty: Not a member - No points earned");
+                }
+            }
+        }
+        else
+        {
+            sb.AppendLine();
+            sb.AppendLine($"Loyalty: Walk-in customer - No points earned");
         }
 
         return sb.ToString();

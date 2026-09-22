@@ -224,7 +224,7 @@ partial class RecordBarberAttendanceForm
         Controls.Add(pnlInputs);
         FormBorderStyle = FormBorderStyle.None;
         Name = "RecordBarberAttendanceForm";
-        Text = "Record Barber Attendance";
+        Text = "Record Employee Attendance";
         pnlInputs.ResumeLayout(false);
         pnlInputs.PerformLayout();
         ((System.ComponentModel.ISupportInitialize)dgvTodayAttendance).EndInit();

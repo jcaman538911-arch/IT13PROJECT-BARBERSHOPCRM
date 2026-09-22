@@ -32,9 +32,17 @@ partial class PaymentForm
         numAmountReceived = new NumericUpDown();
         lblChangeLabel = new Label();
         lblChangeValue = new Label();
+        lblLoyaltyHeader = new Label();
+        lblCurrentPointsLabel = new Label();
+        lblCurrentPointsValue = new Label();
+        numPointsToEarn = new NumericUpDown();
+        lblNewBalanceLabel = new Label();
+        lblNewBalanceValue = new Label();
+        pnlLoyaltySection = new Panel();
         btnConfirmPayment = new Button();
         btnCancel = new Button();
         ((System.ComponentModel.ISupportInitialize)numAmountReceived).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)numPointsToEarn).BeginInit();
         SuspendLayout();
         // 
         // lblHeader
@@ -183,6 +191,84 @@ partial class PaymentForm
         lblChangeValue.TabIndex = 12;
         lblChangeValue.Text = "₱0.00";
         // 
+        // pnlLoyaltySection
+        // 
+        pnlLoyaltySection.BackColor = Color.FromArgb(45, 45, 45);
+        pnlLoyaltySection.Location = new Point(30, 345);
+        pnlLoyaltySection.Name = "pnlLoyaltySection";
+        pnlLoyaltySection.Size = new Size(360, 110);
+        pnlLoyaltySection.TabIndex = 13;
+        // 
+        // lblLoyaltyHeader
+        // 
+        lblLoyaltyHeader.AutoSize = true;
+        lblLoyaltyHeader.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        lblLoyaltyHeader.ForeColor = ThemeHelper.MutedGold;
+        lblLoyaltyHeader.Location = new Point(10, 10);
+        lblLoyaltyHeader.Name = "lblLoyaltyHeader";
+        lblLoyaltyHeader.Size = new Size(86, 19);
+        lblLoyaltyHeader.TabIndex = 14;
+        lblLoyaltyHeader.Text = "LOYALTY MEMBER";
+        // 
+        // lblCurrentPointsLabel
+        // 
+        lblCurrentPointsLabel.AutoSize = true;
+        lblCurrentPointsLabel.Font = new Font("Segoe UI", 8.5F);
+        lblCurrentPointsLabel.ForeColor = ThemeHelper.WarmGray;
+        lblCurrentPointsLabel.Location = new Point(10, 35);
+        lblCurrentPointsLabel.Name = "lblCurrentPointsLabel";
+        lblCurrentPointsLabel.Size = new Size(82, 15);
+        lblCurrentPointsLabel.TabIndex = 15;
+        lblCurrentPointsLabel.Text = "Current Points:";
+        // 
+        // lblCurrentPointsValue
+        // 
+        lblCurrentPointsValue.AutoSize = true;
+        lblCurrentPointsValue.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        lblCurrentPointsValue.ForeColor = ThemeHelper.WarmIvory;
+        lblCurrentPointsValue.Location = new Point(100, 35);
+        lblCurrentPointsValue.Name = "lblCurrentPointsValue";
+        lblCurrentPointsValue.Size = new Size(12, 17);
+        lblCurrentPointsValue.TabIndex = 16;
+        lblCurrentPointsValue.Text = "0";
+        // 
+
+        // 
+        // numPointsToEarn
+        // 
+        numPointsToEarn.BackColor = Color.White;
+        numPointsToEarn.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        numPointsToEarn.ForeColor = ThemeHelper.PrimaryNavy;
+        numPointsToEarn.Location = new Point(100, 53);
+        numPointsToEarn.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+        numPointsToEarn.Name = "numPointsToEarn";
+        numPointsToEarn.Size = new Size(80, 22);
+        numPointsToEarn.TabIndex = 19;
+        numPointsToEarn.Value = new decimal(new int[] { 10, 0, 0, 0 });
+        numPointsToEarn.ValueChanged += numPointsToEarn_ValueChanged;
+        // 
+        // lblNewBalanceLabel
+        // 
+        lblNewBalanceLabel.AutoSize = true;
+        lblNewBalanceLabel.Font = new Font("Segoe UI", 8.5F);
+        lblNewBalanceLabel.ForeColor = ThemeHelper.WarmGray;
+        lblNewBalanceLabel.Location = new Point(10, 80);
+        lblNewBalanceLabel.Name = "lblNewBalanceLabel";
+        lblNewBalanceLabel.Size = new Size(91, 15);
+        lblNewBalanceLabel.TabIndex = 20;
+        lblNewBalanceLabel.Text = "New Balance After:";
+        // 
+        // lblNewBalanceValue
+        // 
+        lblNewBalanceValue.AutoSize = true;
+        lblNewBalanceValue.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        lblNewBalanceValue.ForeColor = ThemeHelper.MutedGold;
+        lblNewBalanceValue.Location = new Point(100, 80);
+        lblNewBalanceValue.Name = "lblNewBalanceValue";
+        lblNewBalanceValue.Size = new Size(12, 19);
+        lblNewBalanceValue.TabIndex = 21;
+        lblNewBalanceValue.Text = "0";
+        // 
         // btnConfirmPayment
         // 
         btnConfirmPayment.BackColor = ThemeHelper.PrimaryNavy;
@@ -190,10 +276,10 @@ partial class PaymentForm
         btnConfirmPayment.FlatStyle = FlatStyle.Flat;
         btnConfirmPayment.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         btnConfirmPayment.ForeColor = Color.White;
-        btnConfirmPayment.Location = new Point(30, 345);
+        btnConfirmPayment.Location = new Point(30, 465);
         btnConfirmPayment.Name = "btnConfirmPayment";
         btnConfirmPayment.Size = new Size(170, 42);
-        btnConfirmPayment.TabIndex = 13;
+        btnConfirmPayment.TabIndex = 22;
         btnConfirmPayment.Text = "✓ Complete & Pay";
         btnConfirmPayment.UseVisualStyleBackColor = false;
         btnConfirmPayment.Click += btnConfirmPayment_Click;
@@ -205,10 +291,10 @@ partial class PaymentForm
         btnCancel.FlatStyle = FlatStyle.Flat;
         btnCancel.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         btnCancel.ForeColor = ThemeHelper.TextPrimary;
-        btnCancel.Location = new Point(220, 345);
+        btnCancel.Location = new Point(220, 465);
         btnCancel.Name = "btnCancel";
         btnCancel.Size = new Size(170, 42);
-        btnCancel.TabIndex = 14;
+        btnCancel.TabIndex = 23;
         btnCancel.Text = "Cancel";
         btnCancel.UseVisualStyleBackColor = false;
         btnCancel.Click += btnCancel_Click;
@@ -218,9 +304,10 @@ partial class PaymentForm
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = ThemeHelper.CardBackground;
-        ClientSize = new Size(420, 410);
+        ClientSize = new Size(420, 530);
         Controls.Add(btnCancel);
         Controls.Add(btnConfirmPayment);
+        Controls.Add(pnlLoyaltySection);
         Controls.Add(lblChangeValue);
         Controls.Add(lblChangeLabel);
         Controls.Add(numAmountReceived);
@@ -234,6 +321,12 @@ partial class PaymentForm
         Controls.Add(lblSubtotalValue);
         Controls.Add(lblSubtotalLabel);
         Controls.Add(lblHeader);
+        pnlLoyaltySection.Controls.Add(lblNewBalanceValue);
+        pnlLoyaltySection.Controls.Add(lblNewBalanceLabel);
+        pnlLoyaltySection.Controls.Add(numPointsToEarn);
+        pnlLoyaltySection.Controls.Add(lblCurrentPointsValue);
+        pnlLoyaltySection.Controls.Add(lblCurrentPointsLabel);
+        pnlLoyaltySection.Controls.Add(lblLoyaltyHeader);
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -241,6 +334,7 @@ partial class PaymentForm
         StartPosition = FormStartPosition.CenterParent;
         Text = "Payment Checkout";
         ((System.ComponentModel.ISupportInitialize)numAmountReceived).EndInit();
+        ((System.ComponentModel.ISupportInitialize)numPointsToEarn).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -260,6 +354,13 @@ partial class PaymentForm
     private NumericUpDown numAmountReceived;
     private Label lblChangeLabel;
     private Label lblChangeValue;
+    private Label lblLoyaltyHeader;
+    private Label lblCurrentPointsLabel;
+    private Label lblCurrentPointsValue;
+    private NumericUpDown numPointsToEarn;
+    private Label lblNewBalanceLabel;
+    private Label lblNewBalanceValue;
+    private Panel pnlLoyaltySection;
     private Button btnConfirmPayment;
     private Button btnCancel;
 }
