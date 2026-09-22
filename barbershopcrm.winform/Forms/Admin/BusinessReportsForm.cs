@@ -15,6 +15,7 @@ public partial class BusinessReportsForm : Form
     public BusinessReportsForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvReportDetails);
         HighlightTab(btnSalesReport);
         LoadSalesReport();

@@ -15,10 +15,13 @@ public partial class LoyaltyRewardsForm : Form
     public LoyaltyRewardsForm(UserRole userRole = UserRole.Admin)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _userRole = userRole;
         ThemeHelper.ApplyModernGrid(dgvLoyaltyRewards);
+        ThemeHelper.ApplyModernGrid(dgvLoyaltyHistory);
         ConfigureRoleAccess();
         LoadRewards();
+        LoadLoyaltyHistory();
     }
 
     private void ConfigureRoleAccess()
@@ -47,6 +50,27 @@ public partial class LoyaltyRewardsForm : Form
             Discount = $"₱{r.DiscountAmount:N2} OFF",
             Status = r.IsActive ? "Active" : "Disabled"
         }).ToList();
+    }
+
+    private void LoadLoyaltyHistory()
+    {
+        try
+        {
+            var history = SqlDataRepository.Instance.GetAllLoyaltyHistory();
+            dgvLoyaltyHistory.DataSource = history.Select(h => new
+            {
+                Date = h.DateCreated.ToString("yyyy-MM-dd HH:mm"),
+                Customer = h.CustomerName,
+                Activity = h.PointsEarned > 0 && h.PointsRedeemed > 0 ? "EARNED+REDEEMED" : h.PointsEarned > 0 ? "EARNED" : "REDEEMED",
+                Points = h.PointsEarned > 0 ? $"+{h.PointsEarned}" : $"-{h.PointsRedeemed}",
+                h.Description,
+                h.RecordedBy
+            }).ToList();
+        }
+        catch
+        {
+            dgvLoyaltyHistory.DataSource = null;
+        }
     }
 
     private void dgvLoyaltyRewards_SelectionChanged(object sender, EventArgs e)
@@ -87,6 +111,7 @@ public partial class LoyaltyRewardsForm : Form
 
         SqlDataRepository.Instance.AddLoyaltyReward(reward);
         SqlDataRepository.Instance.AddSystemLog("INFO", "Loyalty", $"Added reward tier '{reward.RewardName}'", "admin");
+        LoadLoyaltyHistory();
         MessageBox.Show("Loyalty Reward created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         ClearForm();
         LoadRewards();
@@ -113,6 +138,7 @@ public partial class LoyaltyRewardsForm : Form
 
         SqlDataRepository.Instance.UpdateLoyaltyReward(reward);
         SqlDataRepository.Instance.AddSystemLog("INFO", "Loyalty", $"Updated reward ID {_selectedRewardId} '{reward.RewardName}'", "admin");
+        LoadLoyaltyHistory();
         MessageBox.Show("Loyalty Reward updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         ClearForm();
         LoadRewards();

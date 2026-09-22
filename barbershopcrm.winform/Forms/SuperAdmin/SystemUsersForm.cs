@@ -14,6 +14,7 @@ public partial class SystemUsersForm : Form
     public SystemUsersForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvUsers);
         PopulateRoles();
         LoadUsers();

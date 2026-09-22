@@ -14,6 +14,7 @@ public partial class CustomersForm : Form
     public CustomersForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvCustomers);
         LoadCustomers();
     }

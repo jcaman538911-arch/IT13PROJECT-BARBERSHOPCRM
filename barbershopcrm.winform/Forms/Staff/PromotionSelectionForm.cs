@@ -14,6 +14,7 @@ public partial class PromotionSelectionForm : Form
     public PromotionSelectionForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvPromotions);
         LoadActivePromotions();
     }

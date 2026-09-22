@@ -14,6 +14,7 @@ public partial class SuperAdminDashboardForm : Form
     public SuperAdminDashboardForm(MainForm? mainShell = null)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _mainShell = mainShell;
         ThemeHelper.ApplyModernGrid(dgvSystemLogs);
         LoadMetricsAndLogs();

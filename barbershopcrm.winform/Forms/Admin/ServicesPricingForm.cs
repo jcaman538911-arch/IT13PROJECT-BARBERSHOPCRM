@@ -14,6 +14,7 @@ public partial class ServicesPricingForm : Form
     public ServicesPricingForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvServices);
         LoadServices();
     }

@@ -14,6 +14,7 @@ public partial class EmployeesForm : Form
     public EmployeesForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvEmployees);
         PopulatePositions();
         LoadEmployees();

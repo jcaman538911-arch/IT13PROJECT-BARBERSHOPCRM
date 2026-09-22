@@ -15,6 +15,7 @@ public partial class PromotionsForm : Form
     public PromotionsForm(UserRole userRole = UserRole.Admin)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _userRole = userRole;
         ThemeHelper.ApplyModernGrid(dgvPromotions);
         ConfigureRoleAccess();

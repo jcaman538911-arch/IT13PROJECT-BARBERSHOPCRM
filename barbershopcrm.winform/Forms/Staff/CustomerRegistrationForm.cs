@@ -1,3 +1,4 @@
+using BarberShopCRM.Helpers;
 using System;
 using System.Windows.Forms;
 using barbershop.domain;
@@ -12,6 +13,7 @@ public partial class CustomerRegistrationForm : Form
     public CustomerRegistrationForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
     }
 
     private void btnSave_Click(object sender, EventArgs e)

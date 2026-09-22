@@ -219,10 +219,21 @@ BEGIN
         TransactionID INT NULL FOREIGN KEY REFERENCES Transactions(TransactionID),
         PointsEarned INT NOT NULL DEFAULT 0,
         PointsRedeemed INT NOT NULL DEFAULT 0,
+        ActivityType NVARCHAR(20) NOT NULL DEFAULT 'EARNED', -- EARNED, REDEEMED, ADJUSTED
+        PreviousBalance INT NOT NULL DEFAULT 0,
+        NewBalance INT NOT NULL DEFAULT 0,
         Description NVARCHAR(255) NULL,
         DateCreated DATETIME NOT NULL DEFAULT GETDATE(),
         RecordedBy NVARCHAR(100) NULL
     );
+END
+GO
+
+-- One loyalty record per transaction: prevents duplicate point awards.
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_LoyaltyTransactions_TransactionID')
+BEGIN
+    CREATE UNIQUE NONCLUSTERED INDEX UX_LoyaltyTransactions_TransactionID
+        ON LoyaltyTransactions(TransactionID) WHERE TransactionID IS NOT NULL;
 END
 GO
 
@@ -316,6 +327,26 @@ BEGIN
         Details NVARCHAR(MAX) NULL,
         Priority NVARCHAR(20) NOT NULL DEFAULT 'Medium',
         Status NVARCHAR(20) NOT NULL DEFAULT 'Open',
+        CreatedDate DATETIME NOT NULL DEFAULT GETDATE()
+    );
+END
+GO
+
+-- 20. APPOINTMENTS TABLE
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appointments')
+BEGIN
+    CREATE TABLE Appointments (
+        AppointmentID INT IDENTITY(1,1) PRIMARY KEY,
+        AppointmentNumber NVARCHAR(50) NOT NULL,
+        CustomerID INT NOT NULL,
+        CustomerName NVARCHAR(100) NOT NULL,
+        ServiceID INT NULL,
+        ServiceName NVARCHAR(100) NOT NULL,
+        BarberID INT NULL,
+        BarberName NVARCHAR(100) NOT NULL,
+        ScheduledAt DATETIME NOT NULL,
+        Status NVARCHAR(20) NOT NULL DEFAULT 'Scheduled',
+        Notes NVARCHAR(255) NULL,
         CreatedDate DATETIME NOT NULL DEFAULT GETDATE()
     );
 END

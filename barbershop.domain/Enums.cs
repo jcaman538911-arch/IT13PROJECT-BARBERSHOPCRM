@@ -32,5 +32,15 @@ public enum TransactionStatus
 {
     InService,
     Completed,
+    Cancelled,
+    Waiting,
+    Called
+}
+
+public enum AppointmentStatus
+{
+    Scheduled,
+    CheckedIn,
+    Completed,
     Cancelled
 }

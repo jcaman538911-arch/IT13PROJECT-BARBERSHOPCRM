@@ -21,10 +21,21 @@ public partial class ServiceTransactionForm : Form
     public ServiceTransactionForm(User currentUser)
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         _currentUser = currentUser;
         ThemeHelper.ApplyModernGrid(dgvActiveTransactions);
+        lblLoyaltyInfo.Click += lblLoyaltyInfo_Click;
         PopulateDropdowns();
         LoadTodayTransactions();
+    }
+
+    private void lblLoyaltyInfo_Click(object? sender, EventArgs e)
+    {
+        if (_selectedCustomer is { IsLoyaltyMember: true } member)
+        {
+            using var card = new LoyaltyCardForm(member);
+            card.ShowDialog(this);
+        }
     }
 
     private void PopulateDropdowns()
@@ -88,6 +99,7 @@ public partial class ServiceTransactionForm : Form
                     _selectedCustomer = searchModal.SelectedCustomer;
                     lblCustomerName.Text = $"{_selectedCustomer.FullName} ({(_selectedCustomer.IsLoyaltyMember ? "Member" : "Regular")})";
                 }
+                UpdateLoyaltyDisplay();
                 RecalculateTotals();
             }
         }
@@ -105,12 +117,75 @@ public partial class ServiceTransactionForm : Form
 
     private void cmbPromotion_SelectedIndexChanged(object sender, EventArgs e)
     {
+        // A transaction carries either a business promotion or a points-funded reward, never both.
+        if (cmbPromotion.SelectedItem is Promotion promo && promo.Id > 0
+            && cmbLoyaltyReward.SelectedItem is LoyaltyReward reward && reward.Id > 0)
+        {
+            MessageBox.Show("Only one promotion or loyalty reward may be applied to this transaction.",
+                "Discount Conflict", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            cmbLoyaltyReward.SelectedIndex = 0;
+        }
         RecalculateTotals();
+        UpdateLoyaltyDisplay();
     }
 
     private void cmbLoyaltyReward_SelectedIndexChanged(object sender, EventArgs e)
     {
+        if (cmbLoyaltyReward.SelectedItem is LoyaltyReward reward && reward.Id > 0)
+        {
+            if (cmbPromotion.SelectedItem is Promotion activePromo && activePromo.Id > 0)
+            {
+                MessageBox.Show("Only one promotion or loyalty reward may be applied to this transaction.",
+                    "Discount Conflict", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbLoyaltyReward.SelectedIndex = 0;
+                return;
+            }
+            if (_selectedCustomer == null || !_selectedCustomer.IsLoyaltyMember)
+            {
+                MessageBox.Show("Loyalty rewards can only be redeemed by registered loyalty members.", "Loyalty Reward", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbLoyaltyReward.SelectedIndex = 0;
+                return;
+            }
+            var fresh = SqlDataRepository.Instance.GetCustomerById(_selectedCustomer.Id);
+            int balance = fresh?.LoyaltyPoints ?? _selectedCustomer.LoyaltyPoints;
+            if (fresh != null) _selectedCustomer.LoyaltyPoints = balance;
+            if (balance < reward.PointsRequired)
+            {
+                MessageBox.Show($"Insufficient loyalty points. '{reward.RewardName}' requires {reward.PointsRequired} points; current balance is {balance}.", "Loyalty Reward", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbLoyaltyReward.SelectedIndex = 0;
+                return;
+            }
+        }
         RecalculateTotals();
+        UpdateLoyaltyDisplay();
+    }
+
+    private void UpdateLoyaltyDisplay()
+    {
+        if (_selectedCustomer == null)
+        {
+            lblLoyaltyInfo.Text = "Walk-in Customer\nRegister customer to start earning loyalty points.";
+            lblLoyaltyInfo.ForeColor = ThemeHelper.TextSecondary;
+            return;
+        }
+
+        var fresh = SqlDataRepository.Instance.GetCustomerById(_selectedCustomer.Id);
+        if (fresh != null) _selectedCustomer.LoyaltyPoints = fresh.LoyaltyPoints;
+
+        if (!_selectedCustomer.IsLoyaltyMember)
+        {
+            lblLoyaltyInfo.Text = $"{_selectedCustomer.FullName}\nNot a loyalty member. Enroll to start earning points.";
+            lblLoyaltyInfo.ForeColor = ThemeHelper.TextSecondary;
+            return;
+        }
+
+        string extra = cmbLoyaltyReward.SelectedItem is LoyaltyReward r && r.Id > 0
+            ? $"Redeeming '{r.RewardName}' (-{r.PointsRequired} pts)"
+            : "Possible Earned Points: +10 after successful payment";
+        lblLoyaltyInfo.Text = $"{_selectedCustomer.FullName} - Loyalty Member ({LoyaltyCardForm.FormatMemberId(_selectedCustomer.Id)})\n"
+                            + $"Current Points: {_selectedCustomer.LoyaltyPoints}  |  {extra}";
+        lblLoyaltyInfo.ForeColor = ThemeHelper.PrimaryNavy;
+        lblLoyaltyInfo.Cursor = Cursors.Hand;
     }
 
     private void RecalculateTotals()
@@ -235,7 +310,7 @@ public partial class ServiceTransactionForm : Form
             {
                 SqlDataRepository.Instance.SaveTransaction(payModal.CompletedTransaction);
                 SqlDataRepository.Instance.AddSystemLog("INFO", "Payments", $"Processed payment for '{payModal.CompletedTransaction.TransactionNumber}' (₱{payModal.CompletedTransaction.FinalAmount:N2})", _currentUser.Username);
-                MessageBox.Show("Payment processed successfully!", "Transaction Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(BuildPaymentConfirmation(payModal.CompletedTransaction), "Payment Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 ResetForm();
                 LoadTodayTransactions();
             }
@@ -251,11 +326,33 @@ public partial class ServiceTransactionForm : Form
         }
     }
 
+    private string BuildPaymentConfirmation(Transaction txn)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Transaction: {txn.TransactionNumber}");
+        sb.AppendLine($"Customer: {txn.CustomerName}");
+        sb.AppendLine($"Final Amount: ₱{txn.FinalAmount:N2}");
+
+        if (txn.CustomerId.HasValue && txn.PointsEarned > 0)
+        {
+            var customer = SqlDataRepository.Instance.GetCustomerById(txn.CustomerId.Value);
+            sb.AppendLine();
+            sb.AppendLine($"Loyalty Points Earned: +{txn.PointsEarned}");
+            if (txn.PointsRedeemed > 0)
+                sb.AppendLine($"Loyalty Points Redeemed: -{txn.PointsRedeemed}");
+            if (customer != null)
+                sb.AppendLine($"New Loyalty Balance: {customer.LoyaltyPoints} points");
+        }
+
+        return sb.ToString();
+    }
+
     private void ResetForm()
     {
         _selectedTxnId = 0;
         _selectedCustomer = null;
         lblCustomerName.Text = "Walk-in Customer";
+        UpdateLoyaltyDisplay();
         cmbService.SelectedIndex = 0;
         cmbBarber.SelectedIndex = 0;
         cmbPromotion.SelectedIndex = 0;

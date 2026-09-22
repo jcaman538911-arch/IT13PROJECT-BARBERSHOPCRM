@@ -15,6 +15,7 @@ public partial class SuppliersManagementForm : Form
     public SuppliersManagementForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvSuppliers);
         LoadSuppliers();
     }

@@ -33,10 +33,13 @@ partial class LoyaltyRewardsForm
         btnClear = new Button();
         lblRuleInfo = new Label();
         dgvLoyaltyRewards = new DataGridView();
+        lblHistoryTitle = new Label();
+        dgvLoyaltyHistory = new DataGridView();
         pnlInputs.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)numPointsRequired).BeginInit();
         ((System.ComponentModel.ISupportInitialize)numDiscountAmount).BeginInit();
         ((System.ComponentModel.ISupportInitialize)dgvLoyaltyRewards).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)dgvLoyaltyHistory).BeginInit();
         SuspendLayout();
         // 
         // pnlInputs
@@ -219,9 +222,30 @@ partial class LoyaltyRewardsForm
         dgvLoyaltyRewards.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
         dgvLoyaltyRewards.Location = new Point(360, 20);
         dgvLoyaltyRewards.Name = "dgvLoyaltyRewards";
-        dgvLoyaltyRewards.Size = new Size(640, 595);
+        dgvLoyaltyRewards.Size = new Size(640, 320);
         dgvLoyaltyRewards.TabIndex = 1;
         dgvLoyaltyRewards.SelectionChanged += dgvLoyaltyRewards_SelectionChanged;
+        // 
+        // lblHistoryTitle
+        // 
+        lblHistoryTitle.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+        lblHistoryTitle.AutoSize = true;
+        lblHistoryTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        lblHistoryTitle.ForeColor = ThemeHelper.PrimaryNavy;
+        lblHistoryTitle.Location = new Point(360, 350);
+        lblHistoryTitle.Name = "lblHistoryTitle";
+        lblHistoryTitle.Size = new Size(212, 19);
+        lblHistoryTitle.TabIndex = 2;
+        lblHistoryTitle.Text = "Loyalty Points Activity History";
+        // 
+        // dgvLoyaltyHistory
+        // 
+        dgvLoyaltyHistory.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+        dgvLoyaltyHistory.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        dgvLoyaltyHistory.Location = new Point(360, 375);
+        dgvLoyaltyHistory.Name = "dgvLoyaltyHistory";
+        dgvLoyaltyHistory.Size = new Size(640, 240);
+        dgvLoyaltyHistory.TabIndex = 3;
         // 
         // LoyaltyRewardsForm
         // 
@@ -229,6 +253,8 @@ partial class LoyaltyRewardsForm
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = ThemeHelper.WarmCanvas;
         ClientSize = new Size(1020, 640);
+        Controls.Add(dgvLoyaltyHistory);
+        Controls.Add(lblHistoryTitle);
         Controls.Add(dgvLoyaltyRewards);
         Controls.Add(pnlInputs);
         FormBorderStyle = FormBorderStyle.None;
@@ -239,6 +265,7 @@ partial class LoyaltyRewardsForm
         ((System.ComponentModel.ISupportInitialize)numPointsRequired).EndInit();
         ((System.ComponentModel.ISupportInitialize)numDiscountAmount).EndInit();
         ((System.ComponentModel.ISupportInitialize)dgvLoyaltyRewards).EndInit();
+        ((System.ComponentModel.ISupportInitialize)dgvLoyaltyHistory).EndInit();
         ResumeLayout(false);
     }
 
@@ -258,4 +285,6 @@ partial class LoyaltyRewardsForm
     private Button btnDelete;
     private Button btnClear;
     private DataGridView dgvLoyaltyRewards;
+    private Label lblHistoryTitle;
+    private DataGridView dgvLoyaltyHistory;
 }

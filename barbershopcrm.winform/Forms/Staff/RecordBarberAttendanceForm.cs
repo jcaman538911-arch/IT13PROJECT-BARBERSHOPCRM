@@ -12,6 +12,7 @@ public partial class RecordBarberAttendanceForm : Form
     public RecordBarberAttendanceForm()
     {
         InitializeComponent();
+        ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvTodayAttendance);
         PopulateDropdowns();
         LoadTodayAttendance();

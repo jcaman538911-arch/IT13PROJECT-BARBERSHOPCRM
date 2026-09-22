@@ -407,7 +407,9 @@ public class SqlDataRepository : ISqlDataRepository
         return GetCustomers().FindAll(c =>
             c.FullName.ToLower().Contains(query) ||
             c.PhoneNumber.Contains(query) ||
-            c.Email.ToLower().Contains(query));
+            c.Email.ToLower().Contains(query) ||
+            c.Id.ToString() == query ||
+            $"uc-{c.Id:d6}" == query);
     }
 
     public void AddCustomer(Customer customer)
@@ -847,17 +849,69 @@ public class SqlDataRepository : ISqlDataRepository
         return $"TXN-{DateTime.Now:yyyyMMdd}-{count:D3}";
     }
 
+    private static bool _loyaltySchemaEnsured = false;
+    private static readonly object _loyaltySchemaLock = new();
+
+    /// <summary>
+    /// Best-effort migration: extends LoyaltyTransactions with activity metadata
+    /// and enforces one loyalty record per transaction (prevents double point awards).
+    /// </summary>
+    private void EnsureLoyaltySchema(SqlConnection conn, SqlTransaction dbTxn)
+    {
+        if (_loyaltySchemaEnsured) return;
+        lock (_loyaltySchemaLock)
+        {
+            if (_loyaltySchemaEnsured) return;
+            try
+            {
+                string sql = @"
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LoyaltyTransactions') AND name = 'ActivityType')
+                        ALTER TABLE LoyaltyTransactions ADD ActivityType NVARCHAR(20) NOT NULL DEFAULT 'EARNED';
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LoyaltyTransactions') AND name = 'PreviousBalance')
+                        ALTER TABLE LoyaltyTransactions ADD PreviousBalance INT NOT NULL DEFAULT 0;
+                    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LoyaltyTransactions') AND name = 'NewBalance')
+                        ALTER TABLE LoyaltyTransactions ADD NewBalance INT NOT NULL DEFAULT 0;
+                    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_LoyaltyTransactions_TransactionID')
+                        CREATE UNIQUE NONCLUSTERED INDEX UX_LoyaltyTransactions_TransactionID
+                            ON LoyaltyTransactions(TransactionID) WHERE TransactionID IS NOT NULL;";
+                using var cmd = new SqlCommand(sql, conn, dbTxn);
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Non-fatal: idempotency guard in SaveTransaction still prevents double awards.
+            }
+            _loyaltySchemaEnsured = true;
+        }
+    }
+
     public void SaveTransaction(Transaction txn)
     {
         using var conn = TenantConnectionFactory.GetConnection();
         conn.Open();
+        using var dbTxn = conn.BeginTransaction();
+        try
+        {
+            EnsureLoyaltySchema(conn, dbTxn);
 
+            SaveTransactionCore(txn, conn, dbTxn);
+            dbTxn.Commit();
+        }
+        catch
+        {
+            dbTxn.Rollback();
+            throw;
+        }
+    }
+
+    private void SaveTransactionCore(Transaction txn, SqlConnection conn, SqlTransaction dbTxn)
+    {
         if (txn.Id == 0)
         {
             string sql = @"INSERT INTO Transactions (TransactionNumber, CustomerID, CustomerName, StaffID, StaffName, BarberID, BarberName, ServiceID, ServiceName, Subtotal, DiscountAmount, FinalAmount, PaymentMethod, Status, PromotionID, LoyaltyRewardID, PointsEarned, PointsRedeemed, AmountReceived, ChangeAmount, TransactionDate)
                            VALUES (@TxnNum, @CustID, @CustName, @StaffID, @StaffName, @BarberID, @BarberName, @SvcID, @SvcName, @Subtotal, @Discount, @Final, @PM, @Status, @PromoID, @RewardID, @PtsEarned, @PtsRedeemed, @AmtRec, @ChangeAmt, GETDATE());
                            SELECT SCOPE_IDENTITY();";
-            using var cmd = new SqlCommand(sql, conn);
+            using var cmd = new SqlCommand(sql, conn, dbTxn);
             cmd.Parameters.AddWithValue("@TxnNum", txn.TransactionNumber);
             cmd.Parameters.AddWithValue("@CustID", (object?)txn.CustomerId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@CustName", txn.CustomerName);
@@ -884,7 +938,7 @@ public class SqlDataRepository : ISqlDataRepository
             // Save Transaction Details record preserving historical service price
             string detSql = @"INSERT INTO TransactionDetails (TransactionID, ServiceID, ServiceName, Quantity, UnitPrice, Subtotal)
                              VALUES (@TxnID, @SvcID, @SvcName, 1, @UnitPrice, @Subtotal)";
-            using var detCmd = new SqlCommand(detSql, conn);
+            using var detCmd = new SqlCommand(detSql, conn, dbTxn);
             detCmd.Parameters.AddWithValue("@TxnID", txn.Id);
             detCmd.Parameters.AddWithValue("@SvcID", (object?)txn.ServiceId ?? DBNull.Value);
             detCmd.Parameters.AddWithValue("@SvcName", txn.ServiceName);
@@ -899,7 +953,7 @@ public class SqlDataRepository : ISqlDataRepository
                                ChangeAmount = @ChangeAmt, FinalAmount = @Final, DiscountAmount = @Discount, 
                                PointsEarned = @PtsEarned, PointsRedeemed = @PtsRedeemed
                            WHERE TransactionID = @TxnID";
-            using var cmd = new SqlCommand(sql, conn);
+            using var cmd = new SqlCommand(sql, conn, dbTxn);
             cmd.Parameters.AddWithValue("@TxnID", txn.Id);
             cmd.Parameters.AddWithValue("@Status", txn.Status.ToString());
             cmd.Parameters.AddWithValue("@PM", txn.PaymentMethod.ToString());
@@ -912,32 +966,191 @@ public class SqlDataRepository : ISqlDataRepository
             cmd.ExecuteNonQuery();
         }
 
-        // Apply loyalty updates and log history record when completed
-        if (txn.Status == TransactionStatus.Completed && txn.CustomerId.HasValue)
+        // Loyalty points are awarded/deducted exactly once per completed transaction.
+        // The EXISTS guard + UX_LoyaltyTransactions_TransactionID index make re-saves,
+        // refreshes and double-clicks safe: a second attempt is a no-op.
+        if (txn.Status == TransactionStatus.Completed && txn.CustomerId.HasValue && txn.Id > 0)
         {
-            var customer = GetCustomerById(txn.CustomerId.Value);
-            if (customer != null && customer.IsLoyaltyMember)
+            ApplyLoyaltyPoints(txn, conn, dbTxn);
+        }
+    }
+
+    private void ApplyLoyaltyPoints(Transaction txn, SqlConnection conn, SqlTransaction dbTxn)
+    {
+        // Lock and read the customer inside this tenant's database (CompanyID isolation
+        // is structural: each company has its own database/connection).
+        string custSql = @"SELECT LoyaltyPoints, IsLoyaltyMember
+                          FROM Customers WITH (UPDLOCK, HOLDLOCK)
+                          WHERE CustomerID = @CustID AND Status = 'ACTIVE'";
+        int currentPoints;
+        bool isMember;
+        using (var custCmd = new SqlCommand(custSql, conn, dbTxn))
+        {
+            custCmd.Parameters.AddWithValue("@CustID", txn.CustomerId!.Value);
+            using var reader = custCmd.ExecuteReader();
+            if (!reader.Read()) return;
+            currentPoints = reader.GetInt32(0);
+            isMember = reader.GetBoolean(1);
+        }
+
+        if (!isMember) return;
+
+        // Skip if this transaction already earned/redeemed points.
+        string existsSql = "SELECT COUNT(*) FROM LoyaltyTransactions WHERE TransactionID = @TxnID";
+        using (var existsCmd = new SqlCommand(existsSql, conn, dbTxn))
+        {
+            existsCmd.Parameters.AddWithValue("@TxnID", txn.Id);
+            if (Convert.ToInt32(existsCmd.ExecuteScalar()) > 0) return;
+        }
+
+        // A selected reward must still be active to redeem points for it.
+        int requestedRedeem = txn.PointsRedeemed;
+        if (requestedRedeem > 0 && txn.LoyaltyRewardId.HasValue)
+        {
+            string rwSql = "SELECT COUNT(*) FROM LoyaltyRewards WHERE RewardID = @RwID AND Status = 'ACTIVE'";
+            using var rwCmd = new SqlCommand(rwSql, conn, dbTxn);
+            rwCmd.Parameters.AddWithValue("@RwID", txn.LoyaltyRewardId.Value);
+            if (Convert.ToInt32(rwCmd.ExecuteScalar()) == 0) requestedRedeem = 0;
+        }
+
+        int redeemed = Math.Min(requestedRedeem, currentPoints); // never go negative
+        int earned = Math.Max(0, txn.PointsEarned);
+        int newBalance = currentPoints - redeemed + earned;
+
+        string activityType = redeemed > 0 && earned > 0 ? "EARNED+REDEEMED"
+                            : redeemed > 0 ? "REDEEMED"
+                            : earned > 0 ? "EARNED" : "ADJUSTED";
+        string description = redeemed > 0
+            ? $"Service '{txn.ServiceName}' (+{earned} pts earned, -{redeemed} pts redeemed) - {txn.TransactionNumber}"
+            : $"Service '{txn.ServiceName}' (+{earned} pts earned) - {txn.TransactionNumber}";
+
+        bool balancesWritten = false;
+        try
+        {
+            string lLogSql = @"INSERT INTO LoyaltyTransactions (CustomerID, TransactionID, PointsEarned, PointsRedeemed, ActivityType, PreviousBalance, NewBalance, Description, DateCreated, RecordedBy)
+                               VALUES (@CustID, @TxnID, @Earned, @Redeemed, @ActType, @Prev, @New, @Desc, GETDATE(), @RecBy)";
+            using var lCmd = new SqlCommand(lLogSql, conn, dbTxn);
+            lCmd.Parameters.AddWithValue("@CustID", txn.CustomerId!.Value);
+            lCmd.Parameters.AddWithValue("@TxnID", txn.Id);
+            lCmd.Parameters.AddWithValue("@Earned", earned);
+            lCmd.Parameters.AddWithValue("@Redeemed", redeemed);
+            lCmd.Parameters.AddWithValue("@ActType", activityType);
+            lCmd.Parameters.AddWithValue("@Prev", currentPoints);
+            lCmd.Parameters.AddWithValue("@New", newBalance);
+            lCmd.Parameters.AddWithValue("@Desc", description);
+            lCmd.Parameters.AddWithValue("@RecBy", txn.StaffName ?? "Staff");
+            lCmd.ExecuteNonQuery();
+            balancesWritten = true;
+        }
+        catch (Microsoft.Data.SqlClient.SqlException)
+        {
+            // Extended columns missing (schema migration rejected): fall back to the
+            // original insert shape so history is still recorded.
+            string lLogSql = @"IF NOT EXISTS (SELECT 1 FROM LoyaltyTransactions WHERE TransactionID = @TxnID)
+                               INSERT INTO LoyaltyTransactions (CustomerID, TransactionID, PointsEarned, PointsRedeemed, Description, DateCreated, RecordedBy)
+                               VALUES (@CustID, @TxnID, @Earned, @Redeemed, @Desc, GETDATE(), @RecBy)";
+            using var lCmd = new SqlCommand(lLogSql, conn, dbTxn);
+            lCmd.Parameters.AddWithValue("@CustID", txn.CustomerId!.Value);
+            lCmd.Parameters.AddWithValue("@TxnID", txn.Id);
+            lCmd.Parameters.AddWithValue("@Earned", earned);
+            lCmd.Parameters.AddWithValue("@Redeemed", redeemed);
+            lCmd.Parameters.AddWithValue("@Desc", description);
+            lCmd.Parameters.AddWithValue("@RecBy", txn.StaffName ?? "Staff");
+            balancesWritten = lCmd.ExecuteNonQuery() > 0;
+        }
+
+        if (!balancesWritten) return;
+
+        string updSql = @"UPDATE Customers SET LoyaltyPoints = @New, UpdatedAt = GETDATE() WHERE CustomerID = @CustID;
+                          IF EXISTS (SELECT 1 FROM LoyaltyMembers WHERE CustomerID = @CustID)
+                              UPDATE LoyaltyMembers SET CurrentPoints = @New WHERE CustomerID = @CustID;
+                          ELSE
+                              INSERT INTO LoyaltyMembers (CustomerID, CurrentPoints, DateRegistered, Status) VALUES (@CustID, @New, GETDATE(), 'ACTIVE');";
+        using var updCmd = new SqlCommand(updSql, conn, dbTxn);
+        updCmd.Parameters.AddWithValue("@New", newBalance);
+        updCmd.Parameters.AddWithValue("@CustID", txn.CustomerId!.Value);
+        updCmd.ExecuteNonQuery();
+    }
+
+    public List<LoyaltyHistoryEntry> GetLoyaltyHistory(int customerId)
+    {
+        var list = new List<LoyaltyHistoryEntry>();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        string sql = @"SELECT * FROM LoyaltyTransactions WHERE CustomerID = @CustID ORDER BY DateCreated DESC";
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@CustID", customerId);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new LoyaltyHistoryEntry
             {
-                int newPoints = customer.LoyaltyPoints;
-                if (txn.PointsRedeemed > 0) newPoints = Math.Max(0, newPoints - txn.PointsRedeemed);
-                if (txn.PointsEarned > 0) newPoints += txn.PointsEarned;
+                Id = reader.GetInt32(reader.GetOrdinal("LoyaltyTransactionID")),
+                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                TransactionId = reader.IsDBNull(reader.GetOrdinal("TransactionID")) ? null : reader.GetInt32(reader.GetOrdinal("TransactionID")),
+                PointsEarned = reader.GetInt32(reader.GetOrdinal("PointsEarned")),
+                PointsRedeemed = reader.GetInt32(reader.GetOrdinal("PointsRedeemed")),
+                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                DateCreated = reader.GetDateTime(reader.GetOrdinal("DateCreated")),
+                RecordedBy = reader.IsDBNull(reader.GetOrdinal("RecordedBy")) ? "" : reader.GetString(reader.GetOrdinal("RecordedBy"))
+            });
+            ReadActivityMetadata(reader, list[^1]);
+        }
+        return list;
+    }
 
-                customer.LoyaltyPoints = newPoints;
-                UpdateCustomer(customer);
-
-                // Add Loyalty Transaction log record
-                string lLogSql = @"INSERT INTO LoyaltyTransactions (CustomerID, TransactionID, PointsEarned, PointsRedeemed, Description, DateCreated, RecordedBy)
-                                   VALUES (@CustID, @TxnID, @Earned, @Redeemed, @Desc, GETDATE(), @RecBy)";
-                using var lCmd = new SqlCommand(lLogSql, conn);
-                lCmd.Parameters.AddWithValue("@CustID", customer.Id);
-                lCmd.Parameters.AddWithValue("@TxnID", txn.Id);
-                lCmd.Parameters.AddWithValue("@Earned", txn.PointsEarned);
-                lCmd.Parameters.AddWithValue("@Redeemed", txn.PointsRedeemed);
-                lCmd.Parameters.AddWithValue("@Desc", $"Completed haircut transaction {txn.TransactionNumber}");
-                lCmd.Parameters.AddWithValue("@RecBy", txn.StaffName);
-                lCmd.ExecuteNonQuery();
+    /// <summary>
+    /// Reads the extended activity columns when the migration has been applied;
+    /// older databases simply keep the defaults.
+    /// </summary>
+    private static void ReadActivityMetadata(SqlDataReader reader, LoyaltyHistoryEntry entry)
+    {
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            switch (reader.GetName(i))
+            {
+                case "ActivityType" when !reader.IsDBNull(i):
+                    entry.ActivityType = reader.GetString(i);
+                    break;
+                case "PreviousBalance" when !reader.IsDBNull(i):
+                    entry.PreviousBalance = reader.GetInt32(i);
+                    break;
+                case "NewBalance" when !reader.IsDBNull(i):
+                    entry.NewBalance = reader.GetInt32(i);
+                    break;
             }
         }
+    }
+
+    public List<LoyaltyHistoryEntry> GetAllLoyaltyHistory()
+    {
+        EnsureNotSuperAdmin();
+        var list = new List<LoyaltyHistoryEntry>();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        string sql = @"SELECT lt.*, c.FirstName + ' ' + c.LastName AS CustomerName
+                       FROM LoyaltyTransactions lt
+                       INNER JOIN Customers c ON lt.CustomerID = c.CustomerID
+                       ORDER BY lt.DateCreated DESC";
+        using var cmd = new SqlCommand(sql, conn);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new LoyaltyHistoryEntry
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("LoyaltyTransactionID")),
+                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
+                TransactionId = reader.IsDBNull(reader.GetOrdinal("TransactionID")) ? null : reader.GetInt32(reader.GetOrdinal("TransactionID")),
+                PointsEarned = reader.GetInt32(reader.GetOrdinal("PointsEarned")),
+                PointsRedeemed = reader.GetInt32(reader.GetOrdinal("PointsRedeemed")),
+                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                DateCreated = reader.GetDateTime(reader.GetOrdinal("DateCreated")),
+                RecordedBy = reader.IsDBNull(reader.GetOrdinal("RecordedBy")) ? "" : reader.GetString(reader.GetOrdinal("RecordedBy"))
+            });
+            ReadActivityMetadata(reader, list[^1]);
+        }
+        return list;
     }
 
     // --- Inventory Management ---
@@ -1316,5 +1529,193 @@ public class SqlDataRepository : ISqlDataRepository
 
         req.Id = Convert.ToInt32(cmd.ExecuteScalar());
         req.TicketNumber = ticket;
+    }
+
+    public void UpdateSupportRequestStatus(int id, string status)
+    {
+        EnsureNotSuperAdmin();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        string sql = "UPDATE SupportRequests SET Status = @Status WHERE SupportID = @ID";
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Status", status);
+        cmd.Parameters.AddWithValue("@ID", id);
+        cmd.ExecuteNonQuery();
+    }
+
+    // ==================== APPOINTMENTS ====================
+
+    private static bool _appointmentSchemaEnsured = false;
+    private static readonly object _appointmentSchemaLock = new();
+
+    private void EnsureAppointmentSchema(SqlConnection conn)
+    {
+        if (_appointmentSchemaEnsured) return;
+        lock (_appointmentSchemaLock)
+        {
+            if (_appointmentSchemaEnsured) return;
+            string sql = @"
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appointments')
+                CREATE TABLE Appointments (
+                    AppointmentID INT IDENTITY(1,1) PRIMARY KEY,
+                    AppointmentNumber NVARCHAR(50) NOT NULL,
+                    CustomerID INT NOT NULL,
+                    CustomerName NVARCHAR(100) NOT NULL,
+                    ServiceID INT NULL,
+                    ServiceName NVARCHAR(100) NOT NULL,
+                    BarberID INT NULL,
+                    BarberName NVARCHAR(100) NOT NULL,
+                    ScheduledAt DATETIME NOT NULL,
+                    Status NVARCHAR(20) NOT NULL DEFAULT 'Scheduled',
+                    Notes NVARCHAR(255) NULL,
+                    CreatedDate DATETIME NOT NULL DEFAULT GETDATE()
+                );";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.ExecuteNonQuery();
+            _appointmentSchemaEnsured = true;
+        }
+    }
+
+    public List<Appointment> GetAppointments()
+    {
+        EnsureNotSuperAdmin();
+        var list = new List<Appointment>();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        EnsureAppointmentSchema(conn);
+        string sql = @"SELECT AppointmentID, AppointmentNumber, CustomerID, CustomerName, ServiceID, ServiceName, BarberID, BarberName, ScheduledAt, Status, Notes, CreatedDate
+                       FROM Appointments ORDER BY ScheduledAt DESC";
+        using var cmd = new SqlCommand(sql, conn);
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new Appointment
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("AppointmentID")),
+                AppointmentNumber = reader.GetString(reader.GetOrdinal("AppointmentNumber")),
+                CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
+                ServiceId = reader.IsDBNull(reader.GetOrdinal("ServiceID")) ? 0 : reader.GetInt32(reader.GetOrdinal("ServiceID")),
+                ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
+                BarberId = reader.IsDBNull(reader.GetOrdinal("BarberID")) ? 0 : reader.GetInt32(reader.GetOrdinal("BarberID")),
+                BarberName = reader.GetString(reader.GetOrdinal("BarberName")),
+                ScheduledAt = reader.GetDateTime(reader.GetOrdinal("ScheduledAt")),
+                Status = Enum.TryParse(reader.GetString(reader.GetOrdinal("Status")), out AppointmentStatus st) ? st : AppointmentStatus.Scheduled,
+                Notes = reader.IsDBNull(reader.GetOrdinal("Notes")) ? "" : reader.GetString(reader.GetOrdinal("Notes")),
+                CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
+            });
+        }
+        return list;
+    }
+
+    public void AddAppointment(Appointment appointment)
+    {
+        EnsureNotSuperAdmin();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        EnsureAppointmentSchema(conn);
+        appointment.AppointmentNumber = GenerateAppointmentNumber();
+        string sql = @"INSERT INTO Appointments (AppointmentNumber, CustomerID, CustomerName, ServiceID, ServiceName, BarberID, BarberName, ScheduledAt, Status, Notes, CreatedDate)
+                       VALUES (@Num, @CustID, @CustName, @SvcID, @SvcName, @BarbID, @BarbName, @When, @Status, @Notes, GETDATE());
+                       SELECT SCOPE_IDENTITY();";
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Num", appointment.AppointmentNumber);
+        cmd.Parameters.AddWithValue("@CustID", appointment.CustomerId);
+        cmd.Parameters.AddWithValue("@CustName", appointment.CustomerName);
+        cmd.Parameters.AddWithValue("@SvcID", appointment.ServiceId > 0 ? appointment.ServiceId : DBNull.Value);
+        cmd.Parameters.AddWithValue("@SvcName", appointment.ServiceName);
+        cmd.Parameters.AddWithValue("@BarbID", appointment.BarberId > 0 ? appointment.BarberId : DBNull.Value);
+        cmd.Parameters.AddWithValue("@BarbName", appointment.BarberName);
+        cmd.Parameters.AddWithValue("@When", appointment.ScheduledAt);
+        cmd.Parameters.AddWithValue("@Status", appointment.Status.ToString());
+        cmd.Parameters.AddWithValue("@Notes", appointment.Notes ?? "");
+        appointment.Id = Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    public void UpdateAppointment(Appointment appointment)
+    {
+        EnsureNotSuperAdmin();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        EnsureAppointmentSchema(conn);
+        string sql = @"UPDATE Appointments SET CustomerID=@CustID, CustomerName=@CustName, ServiceID=@SvcID, ServiceName=@SvcName,
+                        BarberID=@BarbID, BarberName=@BarbName, ScheduledAt=@When, Notes=@Notes
+                       WHERE AppointmentID=@ID";
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@CustID", appointment.CustomerId);
+        cmd.Parameters.AddWithValue("@CustName", appointment.CustomerName);
+        cmd.Parameters.AddWithValue("@SvcID", appointment.ServiceId > 0 ? appointment.ServiceId : DBNull.Value);
+        cmd.Parameters.AddWithValue("@SvcName", appointment.ServiceName);
+        cmd.Parameters.AddWithValue("@BarbID", appointment.BarberId > 0 ? appointment.BarberId : DBNull.Value);
+        cmd.Parameters.AddWithValue("@BarbName", appointment.BarberName);
+        cmd.Parameters.AddWithValue("@When", appointment.ScheduledAt);
+        cmd.Parameters.AddWithValue("@Notes", appointment.Notes ?? "");
+        cmd.Parameters.AddWithValue("@ID", appointment.Id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void UpdateAppointmentStatus(int appointmentId, AppointmentStatus status)
+    {
+        EnsureNotSuperAdmin();
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        EnsureAppointmentSchema(conn);
+        string sql = "UPDATE Appointments SET Status = @Status WHERE AppointmentID = @ID";
+        using var cmd = new SqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Status", status.ToString());
+        cmd.Parameters.AddWithValue("@ID", appointmentId);
+        cmd.ExecuteNonQuery();
+    }
+
+    public string GenerateAppointmentNumber()
+    {
+        return $"APT-{DateTime.Now:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
+    }
+
+    /// <summary>
+    /// Checks an appointment in: creates a Waiting queue transaction for it and marks the
+    /// appointment CheckedIn. Both writes commit or roll back together.
+    /// </summary>
+    public Transaction CheckInAppointment(Appointment appointment, User staff)
+    {
+        EnsureNotSuperAdmin();
+        decimal price = GetServices().Find(s => s.Id == appointment.ServiceId)?.BasePrice ?? 0m;
+        var txn = new Transaction
+        {
+            TransactionNumber = GenerateTransactionNumber(),
+            CustomerId = appointment.CustomerId,
+            CustomerName = appointment.CustomerName,
+            ServiceId = appointment.ServiceId,
+            ServiceName = appointment.ServiceName,
+            BarberId = appointment.BarberId,
+            BarberName = appointment.BarberName,
+            StaffId = staff.Id,
+            StaffName = staff.FullName,
+            Subtotal = price,
+            FinalAmount = price,
+            Status = TransactionStatus.Waiting,
+            TransactionDate = DateTime.Now
+        };
+
+        using var conn = TenantConnectionFactory.GetConnection();
+        conn.Open();
+        EnsureAppointmentSchema(conn);
+        using var dbTxn = conn.BeginTransaction();
+        try
+        {
+            EnsureLoyaltySchema(conn, dbTxn);
+            SaveTransactionCore(txn, conn, dbTxn);
+            using var cmd = new SqlCommand("UPDATE Appointments SET Status = 'CheckedIn' WHERE AppointmentID = @ID", conn, dbTxn);
+            cmd.Parameters.AddWithValue("@ID", appointment.Id);
+            cmd.ExecuteNonQuery();
+            dbTxn.Commit();
+        }
+        catch
+        {
+            dbTxn.Rollback();
+            throw;
+        }
+        appointment.Status = AppointmentStatus.CheckedIn;
+        return txn;
     }
 }

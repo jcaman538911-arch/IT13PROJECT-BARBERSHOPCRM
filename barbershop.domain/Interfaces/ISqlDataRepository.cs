@@ -56,6 +56,16 @@ public interface ISqlDataRepository
     List<Transaction> GetCustomerTransactions(int customerId);
     string GenerateTransactionNumber();
     void SaveTransaction(Transaction txn);
+    List<LoyaltyHistoryEntry> GetLoyaltyHistory(int customerId);
+    List<LoyaltyHistoryEntry> GetAllLoyaltyHistory();
+
+    // Appointments
+    List<Appointment> GetAppointments();
+    void AddAppointment(Appointment appointment);
+    void UpdateAppointment(Appointment appointment);
+    void UpdateAppointmentStatus(int appointmentId, AppointmentStatus status);
+    Transaction CheckInAppointment(Appointment appointment, User staff);
+    string GenerateAppointmentNumber();
 
     // Inventory
     List<InventoryItem> GetInventoryItems();
@@ -82,4 +92,5 @@ public interface ISqlDataRepository
     void AddSystemLog(string level, string module, string message, string actionBy);
     List<SupportRequest> GetSupportRequests();
     void AddSupportRequest(SupportRequest req);
+    void UpdateSupportRequestStatus(int id, string status);
 }
