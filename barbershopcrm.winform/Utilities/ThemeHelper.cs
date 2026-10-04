@@ -11,6 +11,7 @@ public static class ThemeHelper
     public static readonly Color MutedGold = Color.FromArgb(198, 161, 91);        // #C6A15B - Muted Gold Accent / Selected Item / Primary Button
     public static readonly Color DeepBurgundy = Color.FromArgb(110, 36, 36);      // #6E2424 - Deep Burgundy Logout / Delete / Sales Highlight
     public static readonly Color WarmGray = Color.FromArgb(138, 131, 120);        // #8A8378 - Warm Gray Subtitles & Muted Borders
+    public static readonly Color LightBeige = Color.FromArgb(230, 220, 205);       // #E6DCCD - Light Beige for inactive navigation tabs
 
     // Structural Color Aliases
     public static readonly Color SidebarBackground = DeepCharcoal;               // #171717
@@ -135,11 +136,18 @@ public static class ThemeHelper
         dgv.AllowUserToResizeRows = false;
         dgv.AllowUserToResizeColumns = true;
         dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        dgv.MultiSelect = false;
+        dgv.MultiSelect = true;   // ✅ Enables Ctrl+Click multi-select
         dgv.AllowUserToAddRows = false;
         dgv.AllowUserToDeleteRows = false;
         dgv.ReadOnly = true;
         dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+    }
+
+    public static void ApplySearchableComboBox(ComboBox cmb)
+    {
+        cmb.DropDownStyle = ComboBoxStyle.DropDown;
+        cmb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmb.AutoCompleteSource = AutoCompleteSource.ListItems;
     }
 }
 

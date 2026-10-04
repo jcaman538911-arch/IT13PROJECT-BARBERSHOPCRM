@@ -123,12 +123,12 @@ public partial class PaymentForm : Form
         lblChangeValue.Text = $"₱{change:N2}";
     }
 
-    private void btnConfirmPayment_Click(object sender, EventArgs e)
+    private bool ProcessPaymentCore()
     {
         if (numAmountReceived.Value < CompletedTransaction.FinalAmount)
         {
             MessageBox.Show("Amount received is less than the final price.", "Payment Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
+            return false;
         }
 
         // Use the manually entered points from the numeric control
@@ -141,6 +141,22 @@ public partial class PaymentForm : Form
         CompletedTransaction.AmountReceived = numAmountReceived.Value;
         CompletedTransaction.ChangeAmount = numAmountReceived.Value - CompletedTransaction.FinalAmount;
         CompletedTransaction.Status = TransactionStatus.Completed;
+        return true;
+    }
+
+    private void btnConfirmPayment_Click(object sender, EventArgs e)
+    {
+        if (!ProcessPaymentCore()) return;
+
+        ReceiptHelper.PrintOrPreviewReceipt(CompletedTransaction, this);
+
+        this.DialogResult = DialogResult.OK;
+        this.Close();
+    }
+
+    private void btnNoReceipt_Click(object sender, EventArgs e)
+    {
+        if (!ProcessPaymentCore()) return;
 
         this.DialogResult = DialogResult.OK;
         this.Close();

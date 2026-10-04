@@ -71,14 +71,18 @@ public class AppointmentEditForm : Form
 
         AddRow(layout, row++, "Customer", customerPanel);
         cmbService.Dock = DockStyle.Fill;
-        cmbService.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbService.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbService.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbService.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbService.DataSource = SqlDataRepository.Instance.GetServices().Where(s => s.IsActive).ToList();
         cmbService.DisplayMember = "ServiceName";
         cmbService.ValueMember = "Id";
         AddRow(layout, row++, "Service", cmbService);
 
         cmbBarber.Dock = DockStyle.Fill;
-        cmbBarber.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbBarber.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbBarber.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbBarber.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbBarber.DataSource = SqlDataRepository.Instance.GetBarbers();
         cmbBarber.DisplayMember = "Name";
         cmbBarber.ValueMember = "Id";

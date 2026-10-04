@@ -146,7 +146,9 @@ partial class SystemUsersForm
         // cmbRole
         // 
         cmbRole.BackColor = Color.White;
-        cmbRole.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbRole.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbRole.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbRole.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbRole.Font = new Font("Segoe UI", 10F);
         cmbRole.ForeColor = ThemeHelper.TextPrimary;
         cmbRole.FormattingEnabled = true;

@@ -97,7 +97,7 @@ public partial class ServiceTransactionForm : Form
                 else
                 {
                     _selectedCustomer = searchModal.SelectedCustomer;
-                    lblCustomerName.Text = $"{_selectedCustomer.FullName} ({(_selectedCustomer.IsLoyaltyMember ? "Member" : "Regular")})";
+                    lblCustomerName.Text = $"{_selectedCustomer.FullName} ({(_selectedCustomer.IsLoyaltyMember ? $"Member - {_selectedCustomer.LoyaltyPoints} pts" : "Regular")})";
                 }
                 UpdateLoyaltyDisplay();
                 RecalculateTotals();
@@ -242,7 +242,7 @@ public partial class ServiceTransactionForm : Form
             ServiceName = service.ServiceName,
             BarberId = barber.Id,
             BarberName = barber.Name,
-            StaffId = _currentUser.Id,
+            StaffId = _currentUser.EmployeeId ?? 0,
             StaffName = _currentUser.FullName,
             Subtotal = _subtotal,
             DiscountAmount = _discountAmount,
@@ -291,7 +291,7 @@ public partial class ServiceTransactionForm : Form
             ServiceName = service.ServiceName,
             BarberId = barber.Id,
             BarberName = barber.Name,
-            StaffId = _currentUser.Id,
+            StaffId = _currentUser.EmployeeId ?? 0,
             StaffName = _currentUser.FullName,
             Subtotal = _subtotal,
             DiscountAmount = _discountAmount,

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.domain;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
@@ -18,24 +19,31 @@ public partial class BarberAttendanceManagementForm : Form
         LoadAttendance();
     }
 
-    private void LoadAttendance(bool useFilters = false)
+    private async void LoadAttendance(bool useFilters = false)
     {
-        var records = SqlDataRepository.Instance.GetAttendanceRecords();
+        var filterDate = useFilters ? dtpDateFilter.Value.Date : (DateTime?)null;
+        var filterStatusStr = useFilters && cmbStatusFilter.SelectedIndex > 0 ? cmbStatusFilter.SelectedItem?.ToString() : null;
 
-        if (useFilters)
+        var records = await Task.Run(() => 
         {
-            records = records.Where(r => r.Date.Date == dtpDateFilter.Value.Date).ToList();
-
-            if (cmbStatusFilter.SelectedIndex > 0 && cmbStatusFilter.SelectedItem != null && Enum.TryParse<AttendanceStatus>(cmbStatusFilter.SelectedItem.ToString(), out var status))
+            var data = SqlDataRepository.Instance.GetAttendanceRecords();
+            if (useFilters)
             {
-                records = records.Where(r => r.Status == status).ToList();
+                data = data.Where(r => r.Date.Date == filterDate).ToList();
+
+                if (filterStatusStr != null && Enum.TryParse<AttendanceStatus>(filterStatusStr, out var status))
+                {
+                    data = data.Where(r => r.Status == status).ToList();
+                }
             }
-        }
+            return data;
+        });
+
 
         dgvAttendance.DataSource = records.Select(r => new
         {
             r.Id,
-            Barber = r.EmployeeName,
+            Name = r.EmployeeName,
             Date = r.Date.ToString("yyyy-MM-dd"),
             TimeIn = DateTime.Today.Add(r.TimeIn).ToString("hh:mm tt"),
             TimeOut = r.TimeOut.HasValue ? DateTime.Today.Add(r.TimeOut.Value).ToString("hh:mm tt") : "In Service",

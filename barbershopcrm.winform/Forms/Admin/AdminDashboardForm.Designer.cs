@@ -59,6 +59,7 @@ partial class AdminDashboardForm
         pnlCard4.SuspendLayout();
         pnlCard5.SuspendLayout();
         pnlCard6.SuspendLayout();
+        dtpDashboardDate = new DateTimePicker();
         pnlActivityHeader.SuspendLayout();
         ((System.ComponentModel.ISupportInitialize)dgvRecentTransactions).BeginInit();
         SuspendLayout();
@@ -415,6 +416,7 @@ partial class AdminDashboardForm
         // 
         pnlActivityHeader.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         pnlActivityHeader.BackColor = ThemeHelper.WarmIvory;
+        pnlActivityHeader.Controls.Add(dtpDashboardDate);
         pnlActivityHeader.Controls.Add(btnViewAllTransactions);
         pnlActivityHeader.Controls.Add(lblRecentTitle);
         pnlActivityHeader.Location = new Point(20, 140);
@@ -448,6 +450,16 @@ partial class AdminDashboardForm
         btnViewAllTransactions.TabIndex = 1;
         btnViewAllTransactions.Text = "📜 View All Transactions";
         btnViewAllTransactions.UseVisualStyleBackColor = false;
+        // 
+        // dtpDashboardDate
+        // 
+        dtpDashboardDate.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        dtpDashboardDate.Format = DateTimePickerFormat.Short;
+        dtpDashboardDate.Location = new Point(670, 10);
+        dtpDashboardDate.Name = "dtpDashboardDate";
+        dtpDashboardDate.Size = new Size(130, 23);
+        dtpDashboardDate.TabIndex = 2;
+        dtpDashboardDate.ValueChanged += dtpDashboardDate_ValueChanged;
         // 
         // dgvRecentTransactions
         // 
@@ -528,5 +540,6 @@ partial class AdminDashboardForm
     private Panel pnlActivityHeader;
     private Label lblRecentTitle;
     private Button btnViewAllTransactions;
+    private DateTimePicker dtpDashboardDate;
     private DataGridView dgvRecentTransactions;
 }

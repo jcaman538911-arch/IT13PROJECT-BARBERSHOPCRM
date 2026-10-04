@@ -126,7 +126,9 @@ partial class ServiceTransactionForm
         // cmbService
         // 
         cmbService.BackColor = Color.White;
-        cmbService.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbService.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbService.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbService.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbService.Font = new Font("Segoe UI", 10F);
         cmbService.ForeColor = ThemeHelper.TextPrimary;
         cmbService.FormattingEnabled = true;
@@ -150,7 +152,9 @@ partial class ServiceTransactionForm
         // cmbBarber
         // 
         cmbBarber.BackColor = Color.White;
-        cmbBarber.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbBarber.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbBarber.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbBarber.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbBarber.Font = new Font("Segoe UI", 10F);
         cmbBarber.ForeColor = ThemeHelper.TextPrimary;
         cmbBarber.FormattingEnabled = true;
@@ -195,7 +199,9 @@ partial class ServiceTransactionForm
         // cmbPromotion
         // 
         cmbPromotion.BackColor = Color.White;
-        cmbPromotion.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbPromotion.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbPromotion.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbPromotion.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbPromotion.Font = new Font("Segoe UI", 9.5F);
         cmbPromotion.ForeColor = ThemeHelper.TextPrimary;
         cmbPromotion.FormattingEnabled = true;
@@ -219,7 +225,9 @@ partial class ServiceTransactionForm
         // cmbLoyaltyReward
         // 
         cmbLoyaltyReward.BackColor = Color.White;
-        cmbLoyaltyReward.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbLoyaltyReward.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbLoyaltyReward.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbLoyaltyReward.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbLoyaltyReward.Font = new Font("Segoe UI", 9.5F);
         cmbLoyaltyReward.ForeColor = ThemeHelper.TextPrimary;
         cmbLoyaltyReward.FormattingEnabled = true;

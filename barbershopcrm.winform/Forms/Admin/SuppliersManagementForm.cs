@@ -37,19 +37,25 @@ public partial class SuppliersManagementForm : Form
 
     private void dgvSuppliers_SelectionChanged(object sender, EventArgs e)
     {
-        if (dgvSuppliers.CurrentRow != null && dgvSuppliers.CurrentRow.DataBoundItem != null)
-        {
-            dynamic item = dgvSuppliers.CurrentRow.DataBoundItem;
-            _selectedSupplierId = item.Id;
+        if (dgvSuppliers.CurrentRow?.DataBoundItem == null) return;
 
-            var supp = SqlDataRepository.Instance.GetSuppliers().FirstOrDefault(s => s.Id == _selectedSupplierId);
-            if (supp != null)
-            {
-                txtSupplierName.Text = supp.SupplierName;
-                txtContactInfo.Text = supp.ContactInformation;
-                chkIsActive.Checked = supp.Status.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase);
-            }
+        dynamic item = dgvSuppliers.CurrentRow.DataBoundItem;
+        _selectedSupplierId = item.Id;
+
+        var supp = SqlDataRepository.Instance.GetSuppliers().FirstOrDefault(s => s.Id == _selectedSupplierId);
+        if (supp != null)
+        {
+            txtSupplierName.Text = supp.SupplierName;
+            txtContactInfo.Text = supp.ContactInformation;
+            chkIsActive.Checked = supp.Status.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase);
         }
+    }
+
+    private int GetCurrentRowId()
+    {
+        if (dgvSuppliers.CurrentRow?.DataBoundItem == null) return _selectedSupplierId;
+        dynamic item = dgvSuppliers.CurrentRow.DataBoundItem;
+        return item.Id;
     }
 
     private void btnAdd_Click(object sender, EventArgs e)
@@ -105,7 +111,8 @@ public partial class SuppliersManagementForm : Form
 
     private void btnDeactivate_Click(object sender, EventArgs e)
     {
-        if (_selectedSupplierId == 0)
+        int id = GetCurrentRowId();
+        if (id == 0)
         {
             MessageBox.Show("Please select a supplier to deactivate.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
@@ -114,8 +121,8 @@ public partial class SuppliersManagementForm : Form
         var result = MessageBox.Show("Are you sure you want to deactivate this supplier?", "Confirm Deactivation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (result == DialogResult.Yes)
         {
-            SqlDataRepository.Instance.DeleteSupplier(_selectedSupplierId);
-            SqlDataRepository.Instance.AddSystemLog("WARNING", "Suppliers", $"Deactivated supplier ID {_selectedSupplierId}", "Admin");
+            SqlDataRepository.Instance.DeleteSupplier(id);
+            SqlDataRepository.Instance.AddSystemLog("WARNING", "Suppliers", $"Deactivated supplier ID {id}", "Admin");
             MessageBox.Show("Supplier deactivated.", "Supplier Deactivated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadSuppliers();
         }

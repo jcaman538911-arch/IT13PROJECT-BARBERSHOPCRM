@@ -12,16 +12,16 @@ public interface ISqlDataRepository
     void DeleteUser(int id);
 
     // Employees & Barbers
-    List<Employee> GetEmployees();
+    List<Employee> GetEmployees(bool includeInactive = false);
     List<Employee> GetBarbers();
     void AddEmployee(Employee employee);
     void UpdateEmployee(Employee employee);
     void DeleteEmployee(int id);
 
     // Customers
-    List<Customer> GetCustomers();
+    List<Customer> GetCustomers(bool includeInactive = false);
     Customer? GetCustomerById(int id);
-    List<Customer> SearchCustomers(string query);
+    List<Customer> SearchCustomers(string query, bool includeInactive = false);
     void AddCustomer(Customer customer);
     void UpdateCustomer(Customer customer);
     void DeleteCustomer(int id);
@@ -47,12 +47,12 @@ public interface ISqlDataRepository
 
     // Attendance
     List<AttendanceRecord> GetAttendanceRecords();
-    List<AttendanceRecord> GetTodayAttendance();
+    List<AttendanceRecord> GetTodayAttendance(DateTime? date = null);
     void RecordAttendance(AttendanceRecord record);
 
     // Transactions
     List<Transaction> GetTransactions();
-    List<Transaction> GetTodayTransactions();
+    List<Transaction> GetTodayTransactions(DateTime? date = null);
     List<Transaction> GetCustomerTransactions(int customerId);
     string GenerateTransactionNumber();
     void SaveTransaction(Transaction txn);
@@ -93,4 +93,9 @@ public interface ISqlDataRepository
     List<SupportRequest> GetSupportRequests();
     void AddSupportRequest(SupportRequest req);
     void UpdateSupportRequestStatus(int id, string status);
+
+    // Tenant Subscription Management (SuperAdmin only — Master DB)
+    List<TenantSubscription> GetTenantSubscriptions();
+    void UpdateSubscriptionStatus(int tenantId, string status, string notes);
+    void RenewSubscription(int tenantId, string planName, decimal monthlyFee, int monthsToAdd, string paymentMethod);
 }

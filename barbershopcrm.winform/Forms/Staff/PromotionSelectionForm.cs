@@ -25,10 +25,10 @@ public partial class PromotionSelectionForm : Form
         dgvPromotions.DataSource = promos.Select(p => new
         {
             p.Id,
-            p.Title,
-            p.Description,
+            Promotion = p.Title,
+            ReasonForPromo = p.Description,
             Discount = p.DiscountType == "Percentage" ? $"{p.DiscountValue}% OFF" : $"₱{p.DiscountValue:N2} OFF",
-            p.EligibilityRule
+            QualificationCriteria = p.EligibilityRule
         }).ToList();
     }
 

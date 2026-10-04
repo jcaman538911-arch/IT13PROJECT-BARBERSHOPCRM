@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.domain;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
@@ -19,7 +20,8 @@ public partial class PromotionsForm : Form
         _userRole = userRole;
         ThemeHelper.ApplyModernGrid(dgvPromotions);
         ConfigureRoleAccess();
-        LoadPromotions();
+        ConfigureRoleAccess();
+        this.Load += async (s, e) => await LoadPromotionsAsync();
     }
 
     private void ConfigureRoleAccess()
@@ -46,9 +48,9 @@ public partial class PromotionsForm : Form
         }
     }
 
-    private void LoadPromotions()
+    private async Task LoadPromotionsAsync()
     {
-        var promos = SqlDataRepository.Instance.GetPromotions();
+        var promos = await Task.Run(() => SqlDataRepository.Instance.GetPromotions());
         if (_userRole == UserRole.Staff)
         {
             promos = promos.Where(p => p.IsActive).ToList();
@@ -57,11 +59,10 @@ public partial class PromotionsForm : Form
         dgvPromotions.DataSource = promos.Select(p => new
         {
             p.Id,
-            p.Title,
-            p.Description,
-            p.DiscountType,
+            Promotion = p.Title,
+            ReasonForPromo = p.Description,
             Discount = p.DiscountType == "Percentage" ? $"{p.DiscountValue}% OFF" : $"₱{p.DiscountValue:N2} OFF",
-            p.EligibilityRule,
+            QualificationCriteria = p.EligibilityRule,
             ValidUntil = p.EndDate.ToString("yyyy-MM-dd"),
             Status = p.IsActive ? "Active" : "Disabled"
         }).ToList();
@@ -115,7 +116,7 @@ public partial class PromotionsForm : Form
         SqlDataRepository.Instance.AddSystemLog("INFO", "Promotions", $"Created promotion '{promo.Title}'", "admin");
         MessageBox.Show("Promotion created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         ClearForm();
-        LoadPromotions();
+        _ = LoadPromotionsAsync();
     }
 
     private void btnUpdate_Click(object sender, EventArgs e)
@@ -145,7 +146,7 @@ public partial class PromotionsForm : Form
         SqlDataRepository.Instance.AddSystemLog("INFO", "Promotions", $"Updated promotion ID {_selectedPromoId} '{promo.Title}'", "admin");
         MessageBox.Show("Promotion updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         ClearForm();
-        LoadPromotions();
+        _ = LoadPromotionsAsync();
     }
 
     private void btnDelete_Click(object sender, EventArgs e)
@@ -159,7 +160,7 @@ public partial class PromotionsForm : Form
             SqlDataRepository.Instance.AddSystemLog("WARN", "Promotions", $"Deleted promotion ID {_selectedPromoId}", "admin");
             MessageBox.Show("Promotion deleted successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
             ClearForm();
-            LoadPromotions();
+            _ = LoadPromotionsAsync();
         }
     }
 

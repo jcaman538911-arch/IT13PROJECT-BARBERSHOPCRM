@@ -87,6 +87,7 @@ partial class DailyTransactionsForm
         dtpDate.Name = "dtpDate";
         dtpDate.Size = new Size(130, 23);
         dtpDate.TabIndex = 3;
+        dtpDate.ValueChanged += dtpDate_ValueChanged;
         // 
         // btnFilter
         // 

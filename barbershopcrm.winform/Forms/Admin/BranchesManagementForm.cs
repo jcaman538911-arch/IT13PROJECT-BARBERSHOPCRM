@@ -38,20 +38,26 @@ public partial class BranchesManagementForm : Form
 
     private void dgvBranches_SelectionChanged(object sender, EventArgs e)
     {
-        if (dgvBranches.CurrentRow != null && dgvBranches.CurrentRow.DataBoundItem != null)
-        {
-            dynamic item = dgvBranches.CurrentRow.DataBoundItem;
-            _selectedBranchId = item.Id;
+        if (dgvBranches.CurrentRow?.DataBoundItem == null) return;
 
-            var branch = SqlDataRepository.Instance.GetBranches().FirstOrDefault(b => b.Id == _selectedBranchId);
-            if (branch != null)
-            {
-                txtBranchName.Text = branch.BranchName;
-                txtAddress.Text = branch.Address;
-                txtContactInfo.Text = branch.ContactInformation;
-                chkIsActive.Checked = branch.Status.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase);
-            }
+        dynamic item = dgvBranches.CurrentRow.DataBoundItem;
+        _selectedBranchId = item.Id;
+
+        var branch = SqlDataRepository.Instance.GetBranches().FirstOrDefault(b => b.Id == _selectedBranchId);
+        if (branch != null)
+        {
+            txtBranchName.Text = branch.BranchName;
+            txtAddress.Text = branch.Address;
+            txtContactInfo.Text = branch.ContactInformation;
+            chkIsActive.Checked = branch.Status.Equals("ACTIVE", StringComparison.OrdinalIgnoreCase);
         }
+    }
+
+    private int GetCurrentRowId()
+    {
+        if (dgvBranches.CurrentRow?.DataBoundItem == null) return _selectedBranchId;
+        dynamic item = dgvBranches.CurrentRow.DataBoundItem;
+        return item.Id;
     }
 
     private void btnAdd_Click(object sender, EventArgs e)
@@ -109,7 +115,8 @@ public partial class BranchesManagementForm : Form
 
     private void btnDeactivate_Click(object sender, EventArgs e)
     {
-        if (_selectedBranchId == 0)
+        int id = GetCurrentRowId();
+        if (id == 0)
         {
             MessageBox.Show("Please select a branch to deactivate.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
@@ -118,8 +125,8 @@ public partial class BranchesManagementForm : Form
         var result = MessageBox.Show("Are you sure you want to deactivate this branch?", "Confirm Deactivation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
         if (result == DialogResult.Yes)
         {
-            SqlDataRepository.Instance.DeleteBranch(_selectedBranchId);
-            SqlDataRepository.Instance.AddSystemLog("WARNING", "Branches", $"Deactivated branch ID {_selectedBranchId}", "Admin");
+            SqlDataRepository.Instance.DeleteBranch(id);
+            SqlDataRepository.Instance.AddSystemLog("WARNING", "Branches", $"Deactivated branch ID {id}", "Admin");
             MessageBox.Show("Branch deactivated.", "Branch Deactivated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             LoadBranches();
         }

@@ -1,3 +1,6 @@
+using System;
+using System.Drawing;
+using System.Windows.Forms;
 using BarberShopCRM.Helpers;
 
 namespace BarberShopCRM.Forms.Staff;
@@ -15,345 +18,536 @@ partial class StaffDashboardForm
         base.Dispose(disposing);
     }
 
-    #region Windows Form Designer generated code
-
     private void InitializeComponent()
     {
-        pnlQuickActions = new Panel();
-        lblQuickTitle = new Label();
-        btnNewCustomer = new Button();
-        btnNewTransaction = new Button();
-        btnApplyPromotion = new Button();
-        btnRedeemLoyalty = new Button();
-        btnRecordAttendance = new Button();
-        pnlCard1 = new Panel();
-        lblCard1Title = new Label();
-        lblCard1Value = new Label();
-        pnlCard2 = new Panel();
-        lblCard2Title = new Label();
-        lblCard2Value = new Label();
-        pnlCard3 = new Panel();
-        lblCard3Title = new Label();
-        lblCard3Value = new Label();
-        pnlCard4 = new Panel();
-        lblCard4Title = new Label();
-        lblCard4Value = new Label();
-        lblQueueTitle = new Label();
-        dgvTodayQueue = new DataGridView();
-        pnlQuickActions.SuspendLayout();
-        pnlCard1.SuspendLayout();
-        pnlCard2.SuspendLayout();
-        pnlCard3.SuspendLayout();
-        pnlCard4.SuspendLayout();
-        ((System.ComponentModel.ISupportInitialize)dgvTodayQueue).BeginInit();
-        SuspendLayout();
+        this.tlpMain = new System.Windows.Forms.TableLayoutPanel();
+        this.pnlTop = new System.Windows.Forms.Panel();
+        this.lblHeader = new System.Windows.Forms.Label();
+        this.lblSubHeader = new System.Windows.Forms.Label();
+        this.flpQuickActions = new System.Windows.Forms.FlowLayoutPanel();
+        this.btnNewCustomer = new System.Windows.Forms.Button();
+        this.btnNewService = new System.Windows.Forms.Button();
+        this.btnApplyPromotion = new System.Windows.Forms.Button();
+        this.btnRedeemLoyalty = new System.Windows.Forms.Button();
+        this.btnEmployeeAttendance = new System.Windows.Forms.Button();
+        this.tlpSummaryCards = new System.Windows.Forms.TableLayoutPanel();
+        this.pnlCardCustomers = new System.Windows.Forms.Panel();
+        this.lblCardCustomersValue = new System.Windows.Forms.Label();
+        this.lblCardCustomersTitle = new System.Windows.Forms.Label();
+        this.pnlCardAppointments = new System.Windows.Forms.Panel();
+        this.lblCardAppointmentsValue = new System.Windows.Forms.Label();
+        this.lblCardAppointmentsTitle = new System.Windows.Forms.Label();
+        this.pnlCardWaiting = new System.Windows.Forms.Panel();
+        this.lblCardWaitingValue = new System.Windows.Forms.Label();
+        this.lblCardWaitingTitle = new System.Windows.Forms.Label();
+        this.pnlCardCompleted = new System.Windows.Forms.Panel();
+        this.lblCardCompletedValue = new System.Windows.Forms.Label();
+        this.lblCardCompletedTitle = new System.Windows.Forms.Label();
+        this.pnlCardSales = new System.Windows.Forms.Panel();
+        this.lblCardSalesValue = new System.Windows.Forms.Label();
+        this.lblCardSalesTitle = new System.Windows.Forms.Label();
+        this.pnlCardBarbers = new System.Windows.Forms.Panel();
+        this.lblCardBarbersValue = new System.Windows.Forms.Label();
+        this.lblCardBarbersTitle = new System.Windows.Forms.Label();
+        this.tlpMiddle = new System.Windows.Forms.TableLayoutPanel();
+        this.pnlActivity = new System.Windows.Forms.Panel();
+        this.dgvServiceActivity = new System.Windows.Forms.DataGridView();
+        this.pnlEmptyState = new System.Windows.Forms.Panel();
+        this.btnEmptyStartService = new System.Windows.Forms.Button();
+        this.btnEmptyViewAppts = new System.Windows.Forms.Button();
+        this.lblEmptyState = new System.Windows.Forms.Label();
+        this.lblActivityTitle = new System.Windows.Forms.Label();
+        this.pnlLiveOps = new System.Windows.Forms.Panel();
+        this.lblLiveWaiting = new System.Windows.Forms.Label();
+        this.lblLiveWaitingVal = new System.Windows.Forms.Label();
+        this.lblLiveInService = new System.Windows.Forms.Label();
+        this.lblLiveInServiceVal = new System.Windows.Forms.Label();
+        this.lblLiveAppts = new System.Windows.Forms.Label();
+        this.lblLiveApptsVal = new System.Windows.Forms.Label();
+        this.lblLiveNextAppt = new System.Windows.Forms.Label();
+        this.lblLiveNextApptVal = new System.Windows.Forms.Label();
+        this.lblLiveBarbers = new System.Windows.Forms.Label();
+        this.lblLiveBarbersVal = new System.Windows.Forms.Label();
+        this.btnViewQueue = new System.Windows.Forms.Button();
+        this.btnViewAppointments = new System.Windows.Forms.Button();
+        this.lblLiveOpsTitle = new System.Windows.Forms.Label();
+        this.tlpBottom = new System.Windows.Forms.TableLayoutPanel();
+        this.pnlTrend = new System.Windows.Forms.Panel();
+        this.pnlTrendChart = new System.Windows.Forms.Panel();
+        this.lblTrendTitle = new System.Windows.Forms.Label();
+        this.pnlAtAGlance = new System.Windows.Forms.Panel();
+        this.lblGlance1 = new System.Windows.Forms.Label();
+        this.lblGlance1Val = new System.Windows.Forms.Label();
+        this.lblGlance2 = new System.Windows.Forms.Label();
+        this.lblGlance2Val = new System.Windows.Forms.Label();
+        this.lblGlance3 = new System.Windows.Forms.Label();
+        this.lblGlance3Val = new System.Windows.Forms.Label();
+        this.lblAtAGlanceTitle = new System.Windows.Forms.Label();
+
+        this.tlpMain.SuspendLayout();
+        this.pnlTop.SuspendLayout();
+        this.flpQuickActions.SuspendLayout();
+        this.tlpSummaryCards.SuspendLayout();
+        this.pnlCardCustomers.SuspendLayout();
+        this.pnlCardAppointments.SuspendLayout();
+        this.pnlCardWaiting.SuspendLayout();
+        this.pnlCardCompleted.SuspendLayout();
+        this.pnlCardSales.SuspendLayout();
+        this.pnlCardBarbers.SuspendLayout();
+        this.tlpMiddle.SuspendLayout();
+        this.pnlActivity.SuspendLayout();
+        ((System.ComponentModel.ISupportInitialize)(this.dgvServiceActivity)).BeginInit();
+        this.pnlEmptyState.SuspendLayout();
+        this.pnlLiveOps.SuspendLayout();
+        this.tlpBottom.SuspendLayout();
+        this.pnlTrend.SuspendLayout();
+        this.pnlAtAGlance.SuspendLayout();
+        this.SuspendLayout();
+
         // 
-        // pnlQuickActions
+        // tlpMain
         // 
-        pnlQuickActions.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-        pnlQuickActions.BackColor = ThemeHelper.CardBackground;
-        pnlQuickActions.BorderStyle = BorderStyle.FixedSingle;
-        pnlQuickActions.Controls.Add(btnRecordAttendance);
-        pnlQuickActions.Controls.Add(btnRedeemLoyalty);
-        pnlQuickActions.Controls.Add(btnApplyPromotion);
-        pnlQuickActions.Controls.Add(btnNewTransaction);
-        pnlQuickActions.Controls.Add(btnNewCustomer);
-        pnlQuickActions.Controls.Add(lblQuickTitle);
-        pnlQuickActions.Location = new Point(20, 20);
-        pnlQuickActions.Name = "pnlQuickActions";
-        pnlQuickActions.Size = new Size(980, 80);
-        pnlQuickActions.TabIndex = 0;
+        this.tlpMain.ColumnCount = 1;
+        this.tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+        this.tlpMain.Controls.Add(this.pnlTop, 0, 0);
+        this.tlpMain.Controls.Add(this.tlpSummaryCards, 0, 1);
+        this.tlpMain.Controls.Add(this.tlpMiddle, 0, 2);
+        this.tlpMain.Controls.Add(this.tlpBottom, 0, 3);
+        this.tlpMain.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.tlpMain.Location = new System.Drawing.Point(0, 0);
+        this.tlpMain.Name = "tlpMain";
+        this.tlpMain.RowCount = 4;
+        this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 60F));
+        this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 40F));
+        this.tlpMain.Size = new System.Drawing.Size(1200, 800);
+        this.tlpMain.TabIndex = 0;
+        this.tlpMain.BackColor = ThemeHelper.WarmCanvas;
+
         // 
-        // lblQuickTitle
+        // pnlTop
         // 
-        lblQuickTitle.AutoSize = true;
-        lblQuickTitle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-        lblQuickTitle.ForeColor = ThemeHelper.PrimaryNavy;
-        lblQuickTitle.Location = new Point(15, 10);
-        lblQuickTitle.Name = "lblQuickTitle";
-        lblQuickTitle.Size = new Size(181, 17);
-        lblQuickTitle.TabIndex = 0;
-        lblQuickTitle.Text = "⚡ QUICK CASHIER ACTIONS";
+        this.pnlTop.AutoSize = true;
+        this.pnlTop.Controls.Add(this.flpQuickActions);
+        this.pnlTop.Controls.Add(this.lblHeader);
+        this.pnlTop.Controls.Add(this.lblSubHeader);
+        this.pnlTop.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlTop.Location = new System.Drawing.Point(10, 10);
+        this.pnlTop.Margin = new System.Windows.Forms.Padding(10);
+        this.pnlTop.Name = "pnlTop";
+        this.pnlTop.Padding = new System.Windows.Forms.Padding(0, 0, 0, 10);
+
         // 
-        // btnNewCustomer
+        // lblHeader
         // 
-        btnNewCustomer.BackColor = ThemeHelper.SecondaryNavy;
-        btnNewCustomer.FlatAppearance.BorderSize = 0;
-        btnNewCustomer.FlatStyle = FlatStyle.Flat;
-        btnNewCustomer.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnNewCustomer.ForeColor = Color.White;
-        btnNewCustomer.Location = new Point(15, 34);
-        btnNewCustomer.Name = "btnNewCustomer";
-        btnNewCustomer.Size = new Size(170, 35);
-        btnNewCustomer.TabIndex = 1;
-        btnNewCustomer.Text = "👤 New Customer";
-        btnNewCustomer.UseVisualStyleBackColor = false;
-        btnNewCustomer.Click += btnNewCustomer_Click;
+        this.lblHeader.AutoSize = true;
+        this.lblHeader.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+        this.lblHeader.ForeColor = ThemeHelper.DeepCharcoal;
+        this.lblHeader.Location = new System.Drawing.Point(0, 0);
+        this.lblHeader.Name = "lblHeader";
+        this.lblHeader.Text = "Staff / Cashier Dashboard";
+
         // 
-        // btnNewTransaction
+        // lblSubHeader
         // 
-        btnNewTransaction.BackColor = ThemeHelper.PrimaryNavy;
-        btnNewTransaction.FlatAppearance.BorderSize = 0;
-        btnNewTransaction.FlatStyle = FlatStyle.Flat;
-        btnNewTransaction.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnNewTransaction.ForeColor = Color.White;
-        btnNewTransaction.Location = new Point(195, 34);
-        btnNewTransaction.Name = "btnNewTransaction";
-        btnNewTransaction.Size = new Size(180, 35);
-        btnNewTransaction.TabIndex = 2;
-        btnNewTransaction.Text = "✂️ New Transaction POS";
-        btnNewTransaction.UseVisualStyleBackColor = false;
-        btnNewTransaction.Click += btnNewTransaction_Click;
+        this.lblSubHeader.AutoSize = true;
+        this.lblSubHeader.Font = new System.Drawing.Font("Segoe UI", 10F);
+        this.lblSubHeader.ForeColor = ThemeHelper.DeepCharcoal;
+        this.lblSubHeader.Location = new System.Drawing.Point(2, 32);
+        this.lblSubHeader.Name = "lblSubHeader";
+        this.lblSubHeader.Text = "Today's front-desk operations and service activity.";
+
         // 
-        // btnApplyPromotion
+        // flpQuickActions
         // 
-        btnApplyPromotion.BackColor = ThemeHelper.CardHeaderBg;
-        btnApplyPromotion.FlatAppearance.BorderSize = 0;
-        btnApplyPromotion.FlatStyle = FlatStyle.Flat;
-        btnApplyPromotion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnApplyPromotion.ForeColor = ThemeHelper.TextPrimary;
-        btnApplyPromotion.Location = new Point(385, 34);
-        btnApplyPromotion.Name = "btnApplyPromotion";
-        btnApplyPromotion.Size = new Size(170, 35);
-        btnApplyPromotion.TabIndex = 3;
-        btnApplyPromotion.Text = "🏷️ Apply Promotion";
-        btnApplyPromotion.UseVisualStyleBackColor = false;
-        btnApplyPromotion.Click += btnApplyPromotion_Click;
+        this.flpQuickActions.AutoSize = true;
+        this.flpQuickActions.Controls.Add(this.btnNewCustomer);
+        this.flpQuickActions.Controls.Add(this.btnNewService);
+        this.flpQuickActions.Controls.Add(this.btnApplyPromotion);
+        this.flpQuickActions.Controls.Add(this.btnRedeemLoyalty);
+        this.flpQuickActions.Controls.Add(this.btnEmployeeAttendance);
+        this.flpQuickActions.Location = new System.Drawing.Point(0, 65);
+        this.flpQuickActions.Name = "flpQuickActions";
+        this.flpQuickActions.WrapContents = true;
+
         // 
-        // btnRedeemLoyalty
+        // Quick Action Buttons
         // 
-        btnRedeemLoyalty.BackColor = ThemeHelper.CardHeaderBg;
-        btnRedeemLoyalty.FlatAppearance.BorderSize = 0;
-        btnRedeemLoyalty.FlatStyle = FlatStyle.Flat;
-        btnRedeemLoyalty.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnRedeemLoyalty.ForeColor = ThemeHelper.TextPrimary;
-        btnRedeemLoyalty.Location = new Point(565, 34);
-        btnRedeemLoyalty.Name = "btnRedeemLoyalty";
-        btnRedeemLoyalty.Size = new Size(170, 35);
-        btnRedeemLoyalty.TabIndex = 4;
-        btnRedeemLoyalty.Text = "⭐ Redeem Loyalty";
-        btnRedeemLoyalty.UseVisualStyleBackColor = false;
-        btnRedeemLoyalty.Click += btnRedeemLoyalty_Click;
+        this.btnNewCustomer.Text = "[ + New Customer ]";
+        this.btnNewService.Text = "[ ✂ New Service ]";
+        this.btnApplyPromotion.Text = "[ Apply Promotion ]";
+        this.btnRedeemLoyalty.Text = "[ Redeem Loyalty ]";
+        this.btnEmployeeAttendance.Text = "[ Employee Attendance ]";
+        
+        Button[] quickBtns = { this.btnNewCustomer, this.btnNewService, this.btnApplyPromotion, this.btnRedeemLoyalty, this.btnEmployeeAttendance };
+        foreach (var btn in quickBtns)
+        {
+            btn.Size = new System.Drawing.Size(180, 40);
+            btn.Margin = new System.Windows.Forms.Padding(0, 0, 10, 10);
+            btn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.BackColor = ThemeHelper.DeepCharcoal;
+            btn.ForeColor = System.Drawing.Color.White;
+            btn.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            btn.Cursor = System.Windows.Forms.Cursors.Hand;
+        }
+        this.btnNewService.BackColor = ThemeHelper.MutedGold; // Highlight primary action
+        this.btnNewService.ForeColor = ThemeHelper.DeepCharcoal;
+
         // 
-        // btnRecordAttendance
+        // tlpSummaryCards
         // 
-        btnRecordAttendance.BackColor = ThemeHelper.SecondaryNavy;
-        btnRecordAttendance.FlatAppearance.BorderSize = 0;
-        btnRecordAttendance.FlatStyle = FlatStyle.Flat;
-        btnRecordAttendance.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        btnRecordAttendance.ForeColor = Color.White;
-        btnRecordAttendance.Location = new Point(745, 34);
-        btnRecordAttendance.Name = "btnRecordAttendance";
-        btnRecordAttendance.Size = new Size(215, 35);
-        btnRecordAttendance.TabIndex = 5;
-        btnRecordAttendance.Text = "📋 Record Employee Attendance";
-        btnRecordAttendance.UseVisualStyleBackColor = false;
-        btnRecordAttendance.Click += btnRecordAttendance_Click;
+        this.tlpSummaryCards.ColumnCount = 6;
+        for (int i=0; i<6; i++) 
+            this.tlpSummaryCards.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16.66F));
+        
+        this.tlpSummaryCards.Controls.Add(this.pnlCardCustomers, 0, 0);
+        this.tlpSummaryCards.Controls.Add(this.pnlCardAppointments, 1, 0);
+        this.tlpSummaryCards.Controls.Add(this.pnlCardWaiting, 2, 0);
+        this.tlpSummaryCards.Controls.Add(this.pnlCardCompleted, 3, 0);
+        this.tlpSummaryCards.Controls.Add(this.pnlCardSales, 4, 0);
+        this.tlpSummaryCards.Controls.Add(this.pnlCardBarbers, 5, 0);
+        this.tlpSummaryCards.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.tlpSummaryCards.Location = new System.Drawing.Point(10, 140);
+        this.tlpSummaryCards.Margin = new System.Windows.Forms.Padding(10, 0, 10, 10);
+        this.tlpSummaryCards.Name = "tlpSummaryCards";
+        this.tlpSummaryCards.RowCount = 1;
+        this.tlpSummaryCards.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize));
+        this.tlpSummaryCards.AutoSize = true;
+
         // 
-        // pnlCard1
+        // Configure Cards
         // 
-        pnlCard1.BackColor = ThemeHelper.CardBackground;
-        pnlCard1.BorderStyle = BorderStyle.FixedSingle;
-        pnlCard1.Controls.Add(lblCard1Value);
-        pnlCard1.Controls.Add(lblCard1Title);
-        pnlCard1.Location = new Point(20, 115);
-        pnlCard1.Name = "pnlCard1";
-        pnlCard1.Size = new Size(230, 90);
-        pnlCard1.TabIndex = 1;
+        Panel[] cards = { this.pnlCardCustomers, this.pnlCardAppointments, this.pnlCardWaiting, this.pnlCardCompleted, this.pnlCardSales, this.pnlCardBarbers };
+        Label[] cardTitles = { this.lblCardCustomersTitle, this.lblCardAppointmentsTitle, this.lblCardWaitingTitle, this.lblCardCompletedTitle, this.lblCardSalesTitle, this.lblCardBarbersTitle };
+        Label[] cardValues = { this.lblCardCustomersValue, this.lblCardAppointmentsValue, this.lblCardWaitingValue, this.lblCardCompletedValue, this.lblCardSalesValue, this.lblCardBarbersValue };
+        string[] titles = { "CUSTOMERS TODAY", "APPOINTMENTS TODAY", "WAITING IN QUEUE", "COMPLETED SERVICES", "TODAY'S SALES", "BARBERS AVAILABLE" };
+
+        for (int i = 0; i < 6; i++)
+        {
+            cards[i].Dock = System.Windows.Forms.DockStyle.Fill;
+            cards[i].BackColor = System.Drawing.Color.White;
+            cards[i].BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            cards[i].Margin = new System.Windows.Forms.Padding(5);
+            cards[i].MinimumSize = new System.Drawing.Size(0, 80);
+            cards[i].Cursor = System.Windows.Forms.Cursors.Hand;
+
+            cardTitles[i].Text = titles[i];
+            cardTitles[i].Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
+            cardTitles[i].ForeColor = System.Drawing.Color.DimGray;
+            cardTitles[i].AutoSize = true;
+            cardTitles[i].Location = new System.Drawing.Point(10, 10);
+            cards[i].Controls.Add(cardTitles[i]);
+
+            cardValues[i].Text = "-";
+            cardValues[i].Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
+            cardValues[i].ForeColor = ThemeHelper.DeepCharcoal;
+            cardValues[i].AutoSize = true;
+            cardValues[i].Location = new System.Drawing.Point(10, 30);
+            cards[i].Controls.Add(cardValues[i]);
+        }
+
         // 
-        // lblCard1Title
+        // tlpMiddle
         // 
-        lblCard1Title.AutoSize = true;
-        lblCard1Title.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        lblCard1Title.ForeColor = ThemeHelper.TextSecondary;
-        lblCard1Title.Location = new Point(15, 12);
-        lblCard1Title.Name = "lblCard1Title";
-        lblCard1Title.Size = new Size(119, 15);
-        lblCard1Title.TabIndex = 0;
-        lblCard1Title.Text = "CUSTOMERS TODAY";
+        this.tlpMiddle.ColumnCount = 2;
+        this.tlpMiddle.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 72F));
+        this.tlpMiddle.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28F));
+        this.tlpMiddle.Controls.Add(this.pnlActivity, 0, 0);
+        this.tlpMiddle.Controls.Add(this.pnlLiveOps, 1, 0);
+        this.tlpMiddle.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.tlpMiddle.Margin = new System.Windows.Forms.Padding(5);
+
         // 
-        // lblCard1Value
+        // pnlActivity
         // 
-        lblCard1Value.AutoSize = true;
-        lblCard1Value.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
-        lblCard1Value.ForeColor = ThemeHelper.PrimaryNavy;
-        lblCard1Value.Location = new Point(15, 35);
-        lblCard1Value.Name = "lblCard1Value";
-        lblCard1Value.Size = new Size(33, 37);
-        lblCard1Value.TabIndex = 1;
-        lblCard1Value.Text = "2";
+        this.pnlActivity.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlActivity.BackColor = System.Drawing.Color.White;
+        this.pnlActivity.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        this.pnlActivity.Margin = new System.Windows.Forms.Padding(5);
+        this.pnlActivity.Controls.Add(this.dgvServiceActivity);
+        this.pnlActivity.Controls.Add(this.pnlEmptyState);
+        this.pnlActivity.Controls.Add(this.lblActivityTitle);
+
+        this.lblActivityTitle.Text = "TODAY'S SERVICE ACTIVITY";
+        this.lblActivityTitle.Dock = System.Windows.Forms.DockStyle.Top;
+        this.lblActivityTitle.BackColor = ThemeHelper.DeepCharcoal;
+        this.lblActivityTitle.ForeColor = System.Drawing.Color.White;
+        this.lblActivityTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        this.lblActivityTitle.Padding = new System.Windows.Forms.Padding(10);
+        this.lblActivityTitle.AutoSize = false;
+        this.lblActivityTitle.Height = 40;
+        this.lblActivityTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+        this.dgvServiceActivity.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.dgvServiceActivity.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+        this.dgvServiceActivity.AllowUserToResizeRows = false;
+        this.dgvServiceActivity.RowTemplate.Height = 35;
+        this.dgvServiceActivity.BackgroundColor = System.Drawing.Color.White;
+        this.dgvServiceActivity.BorderStyle = System.Windows.Forms.BorderStyle.None;
+        this.dgvServiceActivity.ReadOnly = true;
+        this.dgvServiceActivity.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+
+        this.pnlEmptyState.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlEmptyState.BackColor = System.Drawing.Color.White;
+        this.pnlEmptyState.Controls.Add(this.lblEmptyState);
+        this.pnlEmptyState.Controls.Add(this.btnEmptyStartService);
+        this.pnlEmptyState.Controls.Add(this.btnEmptyViewAppts);
+        
+        this.lblEmptyState.Text = "No service transactions today.\nCompleted and paid services will appear here.";
+        this.lblEmptyState.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+        this.lblEmptyState.Font = new System.Drawing.Font("Segoe UI", 10F);
+        this.lblEmptyState.ForeColor = System.Drawing.Color.DimGray;
+        this.lblEmptyState.Dock = System.Windows.Forms.DockStyle.Top;
+        this.lblEmptyState.Height = 100;
+
+        this.btnEmptyStartService.Text = "Start New Service";
+        this.btnEmptyStartService.Size = new System.Drawing.Size(150, 35);
+        this.btnEmptyStartService.Location = new System.Drawing.Point(100, 100);
+        this.btnEmptyStartService.BackColor = ThemeHelper.DeepCharcoal;
+        this.btnEmptyStartService.ForeColor = System.Drawing.Color.White;
+        this.btnEmptyStartService.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+        
+        this.btnEmptyViewAppts.Text = "View Appointments";
+        this.btnEmptyViewAppts.Size = new System.Drawing.Size(150, 35);
+        this.btnEmptyViewAppts.Location = new System.Drawing.Point(260, 100);
+        this.btnEmptyViewAppts.BackColor = System.Drawing.Color.White;
+        this.btnEmptyViewAppts.ForeColor = ThemeHelper.DeepCharcoal;
+        this.btnEmptyViewAppts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+
         // 
-        // pnlCard2
+        // pnlLiveOps
         // 
-        pnlCard2.BackColor = ThemeHelper.CardBackground;
-        pnlCard2.BorderStyle = BorderStyle.FixedSingle;
-        pnlCard2.Controls.Add(lblCard2Value);
-        pnlCard2.Controls.Add(lblCard2Title);
-        pnlCard2.Location = new Point(270, 115);
-        pnlCard2.Name = "pnlCard2";
-        pnlCard2.Size = new Size(230, 90);
-        pnlCard2.TabIndex = 2;
+        this.pnlLiveOps.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlLiveOps.BackColor = System.Drawing.Color.White;
+        this.pnlLiveOps.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        this.pnlLiveOps.Margin = new System.Windows.Forms.Padding(5);
+        
+        this.lblLiveOpsTitle.Text = "LIVE OPERATIONS";
+        this.lblLiveOpsTitle.Dock = System.Windows.Forms.DockStyle.Top;
+        this.lblLiveOpsTitle.BackColor = ThemeHelper.DeepCharcoal;
+        this.lblLiveOpsTitle.ForeColor = System.Drawing.Color.White;
+        this.lblLiveOpsTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        this.lblLiveOpsTitle.Padding = new System.Windows.Forms.Padding(10);
+        this.lblLiveOpsTitle.AutoSize = false;
+        this.lblLiveOpsTitle.Height = 40;
+        this.lblLiveOpsTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+        this.pnlLiveOps.Controls.Add(this.lblLiveOpsTitle);
+        int top = 60;
+        string[] liveLabels = { "Waiting in Queue", "Currently In Service", "Appointments Today", "Next Appointment", "Barbers Present" };
+        Label[] lblLive = { this.lblLiveWaiting, this.lblLiveInService, this.lblLiveAppts, this.lblLiveNextAppt, this.lblLiveBarbers };
+        Label[] lblLiveVals = { this.lblLiveWaitingVal, this.lblLiveInServiceVal, this.lblLiveApptsVal, this.lblLiveNextApptVal, this.lblLiveBarbersVal };
+
+        for(int i=0; i<5; i++)
+        {
+            lblLive[i].Text = liveLabels[i];
+            lblLive[i].Location = new System.Drawing.Point(20, top);
+            lblLive[i].Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            lblLive[i].AutoSize = true;
+            this.pnlLiveOps.Controls.Add(lblLive[i]);
+
+            lblLiveVals[i].Text = "-";
+            lblLiveVals[i].Location = new System.Drawing.Point(200, top);
+            lblLiveVals[i].Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            lblLiveVals[i].AutoSize = true;
+            lblLiveVals[i].Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            this.pnlLiveOps.Controls.Add(lblLiveVals[i]);
+            top += 35;
+        }
+
+        this.btnViewQueue.Text = "View Queue";
+        this.btnViewQueue.Size = new System.Drawing.Size(120, 35);
+        this.btnViewQueue.Location = new System.Drawing.Point(20, top + 10);
+        this.btnViewQueue.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+        this.pnlLiveOps.Controls.Add(this.btnViewQueue);
+
+        this.btnViewAppointments.Text = "View Appointments";
+        this.btnViewAppointments.Size = new System.Drawing.Size(140, 35);
+        this.btnViewAppointments.Location = new System.Drawing.Point(150, top + 10);
+        this.btnViewAppointments.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+        this.pnlLiveOps.Controls.Add(this.btnViewAppointments);
+
         // 
-        // lblCard2Title
+        // tlpBottom
         // 
-        lblCard2Title.AutoSize = true;
-        lblCard2Title.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        lblCard2Title.ForeColor = ThemeHelper.TextSecondary;
-        lblCard2Title.Location = new Point(15, 12);
-        lblCard2Title.Name = "lblCard2Title";
-        lblCard2Title.Size = new Size(137, 15);
-        lblCard2Title.TabIndex = 0;
-        lblCard2Title.Text = "COMPLETED HAIRCUTS";
+        this.tlpBottom.ColumnCount = 2;
+        this.tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 68F));
+        this.tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 32F));
+        this.tlpBottom.Controls.Add(this.pnlTrend, 0, 0);
+        this.tlpBottom.Controls.Add(this.pnlAtAGlance, 1, 0);
+        this.tlpBottom.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.tlpBottom.Margin = new System.Windows.Forms.Padding(5);
+
         // 
-        // lblCard2Value
+        // pnlTrend
         // 
-        lblCard2Value.AutoSize = true;
-        lblCard2Value.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
-        lblCard2Value.ForeColor = ThemeHelper.PrimaryNavy;
-        lblCard2Value.Location = new Point(15, 35);
-        lblCard2Value.Name = "lblCard2Value";
-        lblCard2Value.Size = new Size(33, 37);
-        lblCard2Value.TabIndex = 1;
-        lblCard2Value.Text = "2";
+        this.pnlTrend.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlTrend.BackColor = System.Drawing.Color.White;
+        this.pnlTrend.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        this.pnlTrend.Margin = new System.Windows.Forms.Padding(5);
+        this.pnlTrend.Controls.Add(this.pnlTrendChart);
+        this.pnlTrend.Controls.Add(this.lblTrendTitle);
+
+        this.lblTrendTitle.Text = "TODAY'S SERVICE TREND (Hourly Completed)";
+        this.lblTrendTitle.Dock = System.Windows.Forms.DockStyle.Top;
+        this.lblTrendTitle.BackColor = ThemeHelper.DeepCharcoal;
+        this.lblTrendTitle.ForeColor = System.Drawing.Color.White;
+        this.lblTrendTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        this.lblTrendTitle.Padding = new System.Windows.Forms.Padding(10);
+        this.lblTrendTitle.AutoSize = false;
+        this.lblTrendTitle.Height = 40;
+        this.lblTrendTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+        this.pnlTrendChart.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlTrendChart.BackColor = System.Drawing.Color.White;
+        this.pnlTrendChart.Padding = new System.Windows.Forms.Padding(20);
+
         // 
-        // pnlCard3
+        // pnlAtAGlance
         // 
-        pnlCard3.BackColor = ThemeHelper.CardBackground;
-        pnlCard3.BorderStyle = BorderStyle.FixedSingle;
-        pnlCard3.Controls.Add(lblCard3Value);
-        pnlCard3.Controls.Add(lblCard3Title);
-        pnlCard3.Location = new Point(520, 115);
-        pnlCard3.Name = "pnlCard3";
-        pnlCard3.Size = new Size(230, 90);
-        pnlCard3.TabIndex = 3;
-        // 
-        // lblCard3Title
-        // 
-        lblCard3Title.AutoSize = true;
-        lblCard3Title.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        lblCard3Title.ForeColor = ThemeHelper.TextSecondary;
-        lblCard3Title.Location = new Point(15, 12);
-        lblCard3Title.Name = "lblCard3Title";
-        lblCard3Title.Size = new Size(96, 15);
-        lblCard3Title.TabIndex = 0;
-        lblCard3Title.Text = "TODAY'S SALES";
-        // 
-        // lblCard3Value
-        // 
-        lblCard3Value.AutoSize = true;
-        lblCard3Value.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
-        lblCard3Value.ForeColor = ThemeHelper.BarberRed;
-        lblCard3Value.Location = new Point(15, 37);
-        lblCard3Value.Name = "lblCard3Value";
-        lblCard3Value.Size = new Size(116, 32);
-        lblCard3Value.TabIndex = 1;
-        lblCard3Value.Text = "₱370.00";
-        // 
-        // pnlCard4
-        // 
-        pnlCard4.BackColor = ThemeHelper.CardBackground;
-        pnlCard4.BorderStyle = BorderStyle.FixedSingle;
-        pnlCard4.Controls.Add(lblCard4Value);
-        pnlCard4.Controls.Add(lblCard4Title);
-        pnlCard4.Location = new Point(770, 115);
-        pnlCard4.Name = "pnlCard4";
-        pnlCard4.Size = new Size(230, 90);
-        pnlCard4.TabIndex = 4;
-        // 
-        // lblCard4Title
-        // 
-        lblCard4Title.AutoSize = true;
-        lblCard4Title.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-        lblCard4Title.ForeColor = ThemeHelper.TextSecondary;
-        lblCard4Title.Location = new Point(15, 12);
-        lblCard4Title.Name = "lblCard4Title";
-        lblCard4Title.Size = new Size(111, 15);
-        lblCard4Title.TabIndex = 0;
-        lblCard4Title.Text = "BARBERS PRESENT";
-        // 
-        // lblCard4Value
-        // 
-        lblCard4Value.AutoSize = true;
-        lblCard4Value.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
-        lblCard4Value.ForeColor = ThemeHelper.SecondaryNavy;
-        lblCard4Value.Location = new Point(15, 35);
-        lblCard4Value.Name = "lblCard4Value";
-        lblCard4Value.Size = new Size(71, 37);
-        lblCard4Value.TabIndex = 1;
-        lblCard4Value.Text = "3 / 3";
-        // 
-        // lblQueueTitle
-        // 
-        lblQueueTitle.AutoSize = true;
-        lblQueueTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
-        lblQueueTitle.ForeColor = ThemeHelper.PrimaryNavy;
-        lblQueueTitle.Location = new Point(20, 220);
-        lblQueueTitle.Name = "lblQueueTitle";
-        lblQueueTitle.Size = new Size(227, 21);
-        lblQueueTitle.TabIndex = 5;
-        lblQueueTitle.Text = "Today's Service Transactions";
-        // 
-        // dgvTodayQueue
-        // 
-        dgvTodayQueue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-        dgvTodayQueue.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-        dgvTodayQueue.Location = new Point(20, 250);
-        dgvTodayQueue.Name = "dgvTodayQueue";
-        dgvTodayQueue.Size = new Size(980, 365);
-        dgvTodayQueue.TabIndex = 6;
-        // 
-        // StaffDashboardForm
-        // 
-        AutoScaleDimensions = new SizeF(7F, 15F);
-        AutoScaleMode = AutoScaleMode.Font;
-        BackColor = ThemeHelper.WarmCanvas;
-        ClientSize = new Size(1020, 640);
-        Controls.Add(dgvTodayQueue);
-        Controls.Add(lblQueueTitle);
-        Controls.Add(pnlCard4);
-        Controls.Add(pnlCard3);
-        Controls.Add(pnlCard2);
-        Controls.Add(pnlCard1);
-        Controls.Add(pnlQuickActions);
-        FormBorderStyle = FormBorderStyle.None;
-        Name = "StaffDashboardForm";
-        Text = "Staff / Cashier Dashboard";
-        pnlQuickActions.ResumeLayout(false);
-        pnlQuickActions.PerformLayout();
-        pnlCard1.ResumeLayout(false);
-        pnlCard1.PerformLayout();
-        pnlCard2.ResumeLayout(false);
-        pnlCard2.PerformLayout();
-        pnlCard3.ResumeLayout(false);
-        pnlCard3.PerformLayout();
-        pnlCard4.ResumeLayout(false);
-        pnlCard4.PerformLayout();
-        ((System.ComponentModel.ISupportInitialize)dgvTodayQueue).EndInit();
-        ResumeLayout(false);
-        PerformLayout();
+        this.pnlAtAGlance.Dock = System.Windows.Forms.DockStyle.Fill;
+        this.pnlAtAGlance.BackColor = System.Drawing.Color.White;
+        this.pnlAtAGlance.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+        this.pnlAtAGlance.Margin = new System.Windows.Forms.Padding(5);
+        
+        this.lblAtAGlanceTitle.Text = "TODAY AT A GLANCE";
+        this.lblAtAGlanceTitle.Dock = System.Windows.Forms.DockStyle.Top;
+        this.lblAtAGlanceTitle.BackColor = ThemeHelper.DeepCharcoal;
+        this.lblAtAGlanceTitle.ForeColor = System.Drawing.Color.White;
+        this.lblAtAGlanceTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+        this.lblAtAGlanceTitle.Padding = new System.Windows.Forms.Padding(10);
+        this.lblAtAGlanceTitle.AutoSize = false;
+        this.lblAtAGlanceTitle.Height = 40;
+        this.lblAtAGlanceTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+        this.pnlAtAGlance.Controls.Add(this.lblAtAGlanceTitle);
+        
+        int topGlance = 60;
+        Label[] lblGs = { this.lblGlance1, this.lblGlance2, this.lblGlance3 };
+        Label[] lblGVals = { this.lblGlance1Val, this.lblGlance2Val, this.lblGlance3Val };
+        string[] gTexts = { "Promotions Used:", "Loyalty Redeemed:", "Total Transactions:" };
+
+        for(int i=0; i<3; i++)
+        {
+            lblGs[i].Text = gTexts[i];
+            lblGs[i].Location = new System.Drawing.Point(20, topGlance);
+            lblGs[i].Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            lblGs[i].AutoSize = true;
+            this.pnlAtAGlance.Controls.Add(lblGs[i]);
+
+            lblGVals[i].Text = "-";
+            lblGVals[i].Location = new System.Drawing.Point(180, topGlance);
+            lblGVals[i].Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            lblGVals[i].AutoSize = true;
+            this.pnlAtAGlance.Controls.Add(lblGVals[i]);
+            topGlance += 40;
+        }
+
+        this.Controls.Add(this.tlpMain);
+        this.Name = "StaffDashboardForm";
+        this.Text = "Staff Dashboard";
+        this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+
+        this.tlpMain.ResumeLayout(false);
+        this.tlpMain.PerformLayout();
+        this.pnlTop.ResumeLayout(false);
+        this.pnlTop.PerformLayout();
+        this.flpQuickActions.ResumeLayout(false);
+        this.tlpSummaryCards.ResumeLayout(false);
+        this.pnlCardCustomers.ResumeLayout(false);
+        this.pnlCardCustomers.PerformLayout();
+        this.pnlCardAppointments.ResumeLayout(false);
+        this.pnlCardAppointments.PerformLayout();
+        this.pnlCardWaiting.ResumeLayout(false);
+        this.pnlCardWaiting.PerformLayout();
+        this.pnlCardCompleted.ResumeLayout(false);
+        this.pnlCardCompleted.PerformLayout();
+        this.pnlCardSales.ResumeLayout(false);
+        this.pnlCardSales.PerformLayout();
+        this.pnlCardBarbers.ResumeLayout(false);
+        this.pnlCardBarbers.PerformLayout();
+        this.tlpMiddle.ResumeLayout(false);
+        this.pnlActivity.ResumeLayout(false);
+        ((System.ComponentModel.ISupportInitialize)(this.dgvServiceActivity)).EndInit();
+        this.pnlEmptyState.ResumeLayout(false);
+        this.pnlLiveOps.ResumeLayout(false);
+        this.pnlLiveOps.PerformLayout();
+        this.tlpBottom.ResumeLayout(false);
+        this.pnlTrend.ResumeLayout(false);
+        this.pnlAtAGlance.ResumeLayout(false);
+        this.pnlAtAGlance.PerformLayout();
+        this.ResumeLayout(false);
     }
+    
+    private System.Windows.Forms.TableLayoutPanel tlpMain;
+    private System.Windows.Forms.Panel pnlTop;
+    private System.Windows.Forms.Label lblHeader;
+    private System.Windows.Forms.Label lblSubHeader;
+    
+    private System.Windows.Forms.FlowLayoutPanel flpQuickActions;
+    private System.Windows.Forms.Button btnNewCustomer;
+    private System.Windows.Forms.Button btnNewService;
+    private System.Windows.Forms.Button btnApplyPromotion;
+    private System.Windows.Forms.Button btnRedeemLoyalty;
+    private System.Windows.Forms.Button btnEmployeeAttendance;
 
-    #endregion
+    private System.Windows.Forms.TableLayoutPanel tlpSummaryCards;
+    private System.Windows.Forms.Panel pnlCardCustomers;
+    private System.Windows.Forms.Label lblCardCustomersValue;
+    private System.Windows.Forms.Label lblCardCustomersTitle;
+    private System.Windows.Forms.Panel pnlCardAppointments;
+    private System.Windows.Forms.Label lblCardAppointmentsValue;
+    private System.Windows.Forms.Label lblCardAppointmentsTitle;
+    private System.Windows.Forms.Panel pnlCardWaiting;
+    private System.Windows.Forms.Label lblCardWaitingValue;
+    private System.Windows.Forms.Label lblCardWaitingTitle;
+    private System.Windows.Forms.Panel pnlCardCompleted;
+    private System.Windows.Forms.Label lblCardCompletedValue;
+    private System.Windows.Forms.Label lblCardCompletedTitle;
+    private System.Windows.Forms.Panel pnlCardSales;
+    private System.Windows.Forms.Label lblCardSalesValue;
+    private System.Windows.Forms.Label lblCardSalesTitle;
+    private System.Windows.Forms.Panel pnlCardBarbers;
+    private System.Windows.Forms.Label lblCardBarbersValue;
+    private System.Windows.Forms.Label lblCardBarbersTitle;
 
-    private Panel pnlQuickActions;
-    private Label lblQuickTitle;
-    private Button btnNewCustomer;
-    private Button btnNewTransaction;
-    private Button btnApplyPromotion;
-    private Button btnRedeemLoyalty;
-    private Button btnRecordAttendance;
-    private Panel pnlCard1;
-    private Label lblCard1Title;
-    private Label lblCard1Value;
-    private Panel pnlCard2;
-    private Label lblCard2Title;
-    private Label lblCard2Value;
-    private Panel pnlCard3;
-    private Label lblCard3Title;
-    private Label lblCard3Value;
-    private Panel pnlCard4;
-    private Label lblCard4Title;
-    private Label lblCard4Value;
-    private Label lblQueueTitle;
-    private DataGridView dgvTodayQueue;
+    private System.Windows.Forms.TableLayoutPanel tlpMiddle;
+    private System.Windows.Forms.Panel pnlActivity;
+    private System.Windows.Forms.DataGridView dgvServiceActivity;
+    private System.Windows.Forms.Panel pnlEmptyState;
+    private System.Windows.Forms.Button btnEmptyStartService;
+    private System.Windows.Forms.Button btnEmptyViewAppts;
+    private System.Windows.Forms.Label lblEmptyState;
+    private System.Windows.Forms.Label lblActivityTitle;
+    
+    private System.Windows.Forms.Panel pnlLiveOps;
+    private System.Windows.Forms.Label lblLiveWaiting;
+    private System.Windows.Forms.Label lblLiveWaitingVal;
+    private System.Windows.Forms.Label lblLiveInService;
+    private System.Windows.Forms.Label lblLiveInServiceVal;
+    private System.Windows.Forms.Label lblLiveAppts;
+    private System.Windows.Forms.Label lblLiveApptsVal;
+    private System.Windows.Forms.Label lblLiveNextAppt;
+    private System.Windows.Forms.Label lblLiveNextApptVal;
+    private System.Windows.Forms.Label lblLiveBarbers;
+    private System.Windows.Forms.Label lblLiveBarbersVal;
+    private System.Windows.Forms.Button btnViewQueue;
+    private System.Windows.Forms.Button btnViewAppointments;
+    private System.Windows.Forms.Label lblLiveOpsTitle;
+
+    private System.Windows.Forms.TableLayoutPanel tlpBottom;
+    private System.Windows.Forms.Panel pnlTrend;
+    private System.Windows.Forms.Panel pnlTrendChart;
+    private System.Windows.Forms.Label lblTrendTitle;
+    
+    private System.Windows.Forms.Panel pnlAtAGlance;
+    private System.Windows.Forms.Label lblGlance1;
+    private System.Windows.Forms.Label lblGlance1Val;
+    private System.Windows.Forms.Label lblGlance2;
+    private System.Windows.Forms.Label lblGlance2Val;
+    private System.Windows.Forms.Label lblGlance3;
+    private System.Windows.Forms.Label lblGlance3Val;
+    private System.Windows.Forms.Label lblAtAGlanceTitle;
 }

@@ -100,9 +100,9 @@ partial class PromotionsForm
         lblDescription.ForeColor = ThemeHelper.TextPrimary;
         lblDescription.Location = new Point(15, 60);
         lblDescription.Name = "lblDescription";
-        lblDescription.Size = new Size(79, 17);
+        lblDescription.Size = new Size(180, 17);
         lblDescription.TabIndex = 2;
-        lblDescription.Text = "Description";
+        lblDescription.Text = "Reason / Business Purpose:";
         // 
         // txtDescription
         // 
@@ -129,7 +129,9 @@ partial class PromotionsForm
         // cmbDiscountType
         // 
         cmbDiscountType.BackColor = Color.White;
-        cmbDiscountType.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbDiscountType.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbDiscountType.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbDiscountType.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbDiscountType.Font = new Font("Segoe UI", 9.5F);
         cmbDiscountType.ForeColor = ThemeHelper.TextPrimary;
         cmbDiscountType.FormattingEnabled = true;
@@ -169,9 +171,9 @@ partial class PromotionsForm
         lblEligibility.ForeColor = ThemeHelper.TextPrimary;
         lblEligibility.Location = new Point(15, 156);
         lblEligibility.Name = "lblEligibility";
-        lblEligibility.Size = new Size(107, 17);
+        lblEligibility.Size = new Size(200, 17);
         lblEligibility.TabIndex = 8;
-        lblEligibility.Text = "Eligibility Code";
+        lblEligibility.Text = "Customer Qualification Criteria:";
         // 
         // txtEligibility
         // 

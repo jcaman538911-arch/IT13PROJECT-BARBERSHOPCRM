@@ -61,7 +61,9 @@ partial class BarberAttendanceManagementForm
         // cmbStatusFilter
         // 
         cmbStatusFilter.BackColor = Color.White;
-        cmbStatusFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbStatusFilter.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbStatusFilter.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbStatusFilter.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbStatusFilter.Font = new Font("Segoe UI", 9.5F);
         cmbStatusFilter.ForeColor = ThemeHelper.TextPrimary;
         cmbStatusFilter.FormattingEnabled = true;

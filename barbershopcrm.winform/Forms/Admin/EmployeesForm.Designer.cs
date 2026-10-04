@@ -120,7 +120,9 @@ partial class EmployeesForm
         // cmbPosition
         // 
         cmbPosition.BackColor = Color.White;
-        cmbPosition.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbPosition.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbPosition.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbPosition.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbPosition.Font = new Font("Segoe UI", 10F);
         cmbPosition.ForeColor = ThemeHelper.TextPrimary;
         cmbPosition.FormattingEnabled = true;

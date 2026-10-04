@@ -17,54 +17,71 @@ public partial class AdminAccountsForm : Form
         LoadAdminAccounts();
     }
 
+    private int _selectedTenantId = 0;
+
     private void LoadAdminAccounts()
     {
-        var admins = SqlDataRepository.Instance.GetUsers().Where(u => u.Role == UserRole.Admin).ToList();
-        dgvAdminAccounts.DataSource = admins.Select(a => new
+        var tenants = SqlDataRepository.Instance.GetTenantSubscriptions();
+        dgvAdminAccounts.DataSource = tenants.Select(t => new
         {
-            a.Id,
-            a.Username,
-            a.FullName,
-            Status = a.IsActive ? "Active" : "Disabled",
-            a.CreatedDate
+            TenantID = t.TenantID,
+            Company = t.CompanyName,
+            Database = t.DatabaseName,
+            AdminUser = "admin", // Standard admin username for tenants
+            SubscriptionPlan = t.PlanName,
+            SubscriptionStatus = t.Status,
+            NextBillingDate = t.ExpiryDate.ToString("yyyy-MM-dd")
         }).ToList();
+    }
+
+    private int GetCurrentRowId()
+    {
+        if (dgvAdminAccounts.CurrentRow?.DataBoundItem == null) return _selectedTenantId;
+        dynamic item = dgvAdminAccounts.CurrentRow.DataBoundItem;
+        return item.TenantID;
     }
 
     private void btnResetPassword_Click(object sender, EventArgs e)
     {
-        if (dgvAdminAccounts.CurrentRow != null && dgvAdminAccounts.CurrentRow.DataBoundItem != null)
+        int tenantId = GetCurrentRowId();
+        if (tenantId == 0)
         {
-            dynamic item = dgvAdminAccounts.CurrentRow.DataBoundItem;
-            int id = item.Id;
+            MessageBox.Show("Please select a tenant to reset their admin password.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
 
-            var user = SqlDataRepository.Instance.GetUsers().FirstOrDefault(u => u.Id == id);
-            if (user != null)
+        var tenant = SqlDataRepository.Instance.GetTenantSubscriptions().FirstOrDefault(t => t.TenantID == tenantId);
+        if (tenant == null) return;
+
+        var result = MessageBox.Show($"Are you sure you want to reset the admin password for '{tenant.CompanyName}' to 'admin123'?", "Confirm Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        if (result != DialogResult.Yes) return;
+
+        try
+        {
+            string tenantConnString = TenantConnectionFactory.GetConnectionString(tenantId);
+            using var conn = new Microsoft.Data.SqlClient.SqlConnection(tenantConnString);
+            conn.Open();
+            using var cmd = new Microsoft.Data.SqlClient.SqlCommand("UPDATE Users SET Password = 'admin123' WHERE Role = 1", conn); // Role 1 = Admin
+            int rows = cmd.ExecuteNonQuery();
+
+            if (rows > 0)
             {
-                user.Password = "admin123";
-                SqlDataRepository.Instance.UpdateUser(user);
-                SqlDataRepository.Instance.AddSystemLog("WARN", "AdminAccounts", $"Reset password for Admin '{user.Username}'", "superadmin");
-                MessageBox.Show($"Password for '{user.Username}' has been reset to default 'admin123'.", "Password Reset", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadAdminAccounts();
+                SqlDataRepository.Instance.AddSystemLog("WARN", "AdminAccounts", $"Reset admin password for Tenant {tenantId} ({tenant.CompanyName})", "superadmin");
+                MessageBox.Show($"Password for '{tenant.CompanyName}' admin has been reset to 'admin123'.", "Password Reset", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+            else
+            {
+                MessageBox.Show($"Could not find an Admin user in the database for {tenant.CompanyName}.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Failed to connect to tenant database to reset password: {ex.Message}", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
     private void btnToggleStatus_Click(object sender, EventArgs e)
     {
-        if (dgvAdminAccounts.CurrentRow != null && dgvAdminAccounts.CurrentRow.DataBoundItem != null)
-        {
-            dynamic item = dgvAdminAccounts.CurrentRow.DataBoundItem;
-            int id = item.Id;
-
-            var user = SqlDataRepository.Instance.GetUsers().FirstOrDefault(u => u.Id == id);
-            if (user != null)
-            {
-                user.IsActive = !user.IsActive;
-                SqlDataRepository.Instance.UpdateUser(user);
-                SqlDataRepository.Instance.AddSystemLog("INFO", "AdminAccounts", $"Toggled active state for Admin '{user.Username}' to {user.IsActive}", "superadmin");
-                MessageBox.Show($"Admin '{user.Username}' status changed to {(user.IsActive ? "Active" : "Disabled")}.", "Status Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadAdminAccounts();
-            }
-        }
+        MessageBox.Show("To suspend or activate a tenant, please go to the 'Subscriptions' form.", "Use Subscriptions Form", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 }

@@ -11,4 +11,10 @@
     <ProjectReference Include="..\barbershop.domain\barbershop.domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Data\UppercutBarberShopCRM_Database.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

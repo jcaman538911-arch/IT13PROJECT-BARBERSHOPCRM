@@ -68,6 +68,23 @@ public partial class MainForm : Form
         {
             first.PerformClick();
         }
+
+        // Asynchronously sync any offline LocalDB transactions up to Cloud DB
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            try
+            {
+                int synced = TenantConnectionFactory.SyncLocalToCloud();
+                if (synced > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MainForm] Automatically synced {synced} offline transaction(s) to Cloud.");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainForm] Background sync warning: {ex.Message}");
+            }
+        });
     }
 
     private void MainForm_KeyDown(object? sender, KeyEventArgs e)
@@ -97,13 +114,13 @@ public partial class MainForm : Form
 
     private DateTime _lastBadgeRefresh = DateTime.MinValue;
 
-    private void timerClock_Tick(object sender, EventArgs e)
+    private async void timerClock_Tick(object sender, EventArgs e)
     {
         UpdateClock();
         if (DateTime.Now - _lastBadgeRefresh > TimeSpan.FromSeconds(60))
         {
             _lastBadgeRefresh = DateTime.Now;
-            RefreshBadges();
+            await RefreshBadgesAsync();
         }
     }
 
@@ -124,6 +141,8 @@ public partial class MainForm : Form
                 Add("", "Dashboard", "🏠", () => OpenChildForm(new SuperAdminDashboardForm(this), "Super Admin Dashboard"));
                 Add("ACCOUNTS", "System Users", "👤", () => OpenChildForm(new SystemUsersForm(), "System Users Management"));
                 Add("ACCOUNTS", "Admin Accounts", "🔑", () => OpenChildForm(new AdminAccountsForm(), "Admin Accounts Manager"));
+                Add("SUBSCRIPTIONS", "Subscription Management", "💳", () => OpenChildForm(new SubscriptionManagementForm(), "Tenant Subscription Management"),
+                    badge: ExpiredSubscriptionCount);
                 Add("SYSTEM", "System Access", "🔒", () => OpenChildForm(new SystemAccessForm(), "System Access & Security"));
                 Add("SYSTEM", "Maintenance", "⚡", () => OpenChildForm(new SystemMaintenanceForm(), "System Maintenance"));
                 Add("SYSTEM", "Updates", "🔄", () => OpenChildForm(new SystemUpdatesForm(), "System Updates & Patches"));
@@ -195,6 +214,19 @@ public partial class MainForm : Form
         }
     }
 
+    private static int ExpiredSubscriptionCount()
+    {
+        try
+        {
+            return SqlDataRepository.Instance.GetTenantSubscriptions()
+                .Count(s => !s.IsActive);
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
     // ==================== NAVIGATION RENDERING ====================
 
     private void RenderNavigation()
@@ -202,8 +234,8 @@ public partial class MainForm : Form
         string query = _sidebarCollapsed ? string.Empty : txtNavSearch.Text.Trim();
         var matches = _navEntries
             .Where(entry => query.Length == 0
-                            || entry.Title.Contains(query, StringComparison.OrdinalIgnoreCase)
-                            || entry.Section.Contains(query, StringComparison.OrdinalIgnoreCase))
+                            || entry.Title.StartsWith(query, StringComparison.OrdinalIgnoreCase)
+                            || entry.Section.StartsWith(query, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         flpNavMenu.SuspendLayout();
@@ -315,12 +347,18 @@ public partial class MainForm : Form
 
     /// <summary>Recomputes live operational counts for rows that declare a badge.
     /// Text is always rendered from the cached value so re-renders stay cheap.</summary>
-    private void RefreshBadges()
+    private async System.Threading.Tasks.Task RefreshBadgesAsync()
     {
-        foreach (var entry in _navEntries.Where(e => e.Badge != null))
+        // Compute badges in background thread so DB queries do not freeze the UI
+        await System.Threading.Tasks.Task.Run(() => 
         {
-            entry.BadgeValue = entry.Badge!.Invoke();
-        }
+            foreach (var entry in _navEntries.Where(e => e.Badge != null))
+            {
+                entry.BadgeValue = entry.Badge!.Invoke();
+            }
+        });
+
+        // Update UI
         foreach (var btn in flpNavMenu.Controls.OfType<NavItemButton>())
         {
             if (btn.Entry.Badge == null) continue;
@@ -396,5 +434,10 @@ public partial class MainForm : Form
             SqlDataRepository.Instance.AddSystemLog("INFO", "Auth", $"User '{CurrentUser.Username}' logged out.", CurrentUser.Username);
             this.Close();
         }
+    }
+
+    private void lblSidebarHeader_Click(object sender, EventArgs e)
+    {
+
     }
 }

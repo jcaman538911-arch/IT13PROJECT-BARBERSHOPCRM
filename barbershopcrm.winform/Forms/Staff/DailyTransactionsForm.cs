@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
 
@@ -16,23 +17,28 @@ public partial class DailyTransactionsForm : Form
         LoadTransactions();
     }
 
-    private void LoadTransactions(string query = "", bool filterByDate = false)
+    private async void LoadTransactions(string query = "", bool filterByDate = false)
     {
-        var txns = SqlDataRepository.Instance.GetTransactions();
-
-        if (filterByDate)
+        var targetDate = filterByDate ? dtpDate.Value.Date : (DateTime?)null;
+        
+        var txns = await Task.Run(() => 
         {
-            txns = txns.Where(t => t.TransactionDate.Date == dtpDate.Value.Date).ToList();
-        }
+            var data = SqlDataRepository.Instance.GetTransactions();
+            if (targetDate.HasValue)
+            {
+                data = data.Where(t => t.TransactionDate.Date == targetDate.Value).ToList();
+            }
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var q = query.ToLower();
+                data = data.Where(t =>
+                    t.TransactionNumber.StartsWith(q, StringComparison.OrdinalIgnoreCase) ||
+                    t.CustomerName.StartsWith(q, StringComparison.OrdinalIgnoreCase) ||
+                    t.BarberName.StartsWith(q, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+            return data;
+        });
 
-        if (!string.IsNullOrWhiteSpace(query))
-        {
-            query = query.ToLower();
-            txns = txns.Where(t =>
-                t.TransactionNumber.ToLower().Contains(query) ||
-                t.CustomerName.ToLower().Contains(query) ||
-                t.BarberName.ToLower().Contains(query)).ToList();
-        }
 
         dgvTransactions.DataSource = txns.Select(t => new
         {
@@ -54,10 +60,17 @@ public partial class DailyTransactionsForm : Form
         LoadTransactions(txtSearch.Text.Trim(), filterByDate: true);
     }
 
+    private void dtpDate_ValueChanged(object? sender, EventArgs e)
+    {
+        LoadTransactions(txtSearch.Text.Trim(), filterByDate: true);
+    }
+
     private void btnReset_Click(object sender, EventArgs e)
     {
         txtSearch.Clear();
+        dtpDate.ValueChanged -= dtpDate_ValueChanged; // prevent triggering twice
         dtpDate.Value = DateTime.Today;
+        dtpDate.ValueChanged += dtpDate_ValueChanged;
         LoadTransactions();
     }
 }

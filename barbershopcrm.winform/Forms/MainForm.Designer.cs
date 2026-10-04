@@ -39,7 +39,7 @@ partial class MainForm
         // 
         // pnlSidebar
         // 
-        pnlSidebar.BackColor = ThemeHelper.DeepCharcoal;
+        pnlSidebar.BackColor = Color.FromArgb(23, 23, 23);
         pnlSidebar.Controls.Add(flpNavMenu);
         pnlSidebar.Controls.Add(txtNavSearch);
         pnlSidebar.Controls.Add(pnlBrand);
@@ -55,11 +55,11 @@ partial class MainForm
         flpNavMenu.AutoScroll = true;
         flpNavMenu.Dock = DockStyle.Fill;
         flpNavMenu.FlowDirection = FlowDirection.TopDown;
-        flpNavMenu.Location = new Point(0, 88);
+        flpNavMenu.Location = new Point(0, 79);
         flpNavMenu.Margin = new Padding(3, 4, 3, 4);
         flpNavMenu.Name = "flpNavMenu";
         flpNavMenu.Padding = new Padding(12, 8, 12, 15);
-        flpNavMenu.Size = new Size(274, 872);
+        flpNavMenu.Size = new Size(274, 881);
         flpNavMenu.TabIndex = 2;
         flpNavMenu.WrapContents = false;
         // 
@@ -69,17 +69,17 @@ partial class MainForm
         txtNavSearch.BorderStyle = BorderStyle.FixedSingle;
         txtNavSearch.Dock = DockStyle.Top;
         txtNavSearch.Font = new Font("Segoe UI", 9F);
-        txtNavSearch.ForeColor = ThemeHelper.WarmIvory;
+        txtNavSearch.ForeColor = Color.FromArgb(243, 235, 221);
         txtNavSearch.Location = new Point(0, 52);
         txtNavSearch.Margin = new Padding(12, 6, 12, 6);
         txtNavSearch.Name = "txtNavSearch";
         txtNavSearch.PlaceholderText = "Search modules...  (Ctrl+K)";
-        txtNavSearch.Size = new Size(274, 25);
+        txtNavSearch.Size = new Size(274, 27);
         txtNavSearch.TabIndex = 1;
         // 
         // pnlBrand
         // 
-        pnlBrand.BackColor = ThemeHelper.DeepCharcoal;
+        pnlBrand.BackColor = Color.FromArgb(23, 23, 23);
         pnlBrand.Controls.Add(lblSidebarHeader);
         pnlBrand.Controls.Add(btnToggleSidebar);
         pnlBrand.Dock = DockStyle.Top;
@@ -91,16 +91,18 @@ partial class MainForm
         // 
         // lblSidebarHeader
         // 
-        lblSidebarHeader.BackColor = ThemeHelper.DeepCharcoal;
+        lblSidebarHeader.BackColor = Color.FromArgb(23, 23, 23);
         lblSidebarHeader.Cursor = Cursors.Hand;
         lblSidebarHeader.Dock = DockStyle.Fill;
         lblSidebarHeader.Font = new Font("Georgia", 10.5F, FontStyle.Bold);
-        lblSidebarHeader.ForeColor = ThemeHelper.WarmIvory;
+        lblSidebarHeader.ForeColor = Color.FromArgb(243, 235, 221);
+        lblSidebarHeader.Location = new Point(12, 0);
         lblSidebarHeader.Name = "lblSidebarHeader";
-        lblSidebarHeader.Size = new Size(226, 52);
+        lblSidebarHeader.Size = new Size(222, 52);
         lblSidebarHeader.TabIndex = 0;
         lblSidebarHeader.Text = "✂ UPPERCUT BARBER SHOP";
         lblSidebarHeader.TextAlign = ContentAlignment.MiddleLeft;
+        lblSidebarHeader.Click += lblSidebarHeader_Click;
         // 
         // btnToggleSidebar
         // 
@@ -109,7 +111,8 @@ partial class MainForm
         btnToggleSidebar.Dock = DockStyle.Right;
         btnToggleSidebar.FlatStyle = FlatStyle.Flat;
         btnToggleSidebar.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-        btnToggleSidebar.ForeColor = ThemeHelper.MutedGold;
+        btnToggleSidebar.ForeColor = Color.FromArgb(198, 161, 91);
+        btnToggleSidebar.Location = new Point(234, 0);
         btnToggleSidebar.Name = "btnToggleSidebar";
         btnToggleSidebar.Size = new Size(36, 52);
         btnToggleSidebar.TabIndex = 1;
@@ -118,7 +121,7 @@ partial class MainForm
         // 
         // pnlHeader
         // 
-        pnlHeader.BackColor = ThemeHelper.DeepCharcoal;
+        pnlHeader.BackColor = Color.FromArgb(23, 23, 23);
         pnlHeader.Controls.Add(lblPageTitle);
         pnlHeader.Controls.Add(lblUserBadge);
         pnlHeader.Controls.Add(lblClock);
@@ -133,10 +136,10 @@ partial class MainForm
         // 
         lblPageTitle.AutoSize = true;
         lblPageTitle.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-        lblPageTitle.ForeColor = ThemeHelper.WarmIvory;
+        lblPageTitle.ForeColor = Color.FromArgb(243, 235, 221);
         lblPageTitle.Location = new Point(23, 22);
         lblPageTitle.Name = "lblPageTitle";
-        lblPageTitle.Size = new Size(230, 25);
+        lblPageTitle.Size = new Size(321, 32);
         lblPageTitle.TabIndex = 0;
         lblPageTitle.Text = "Admin / Owner Dashboard";
         // 
@@ -144,7 +147,7 @@ partial class MainForm
         // 
         lblUserBadge.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         lblUserBadge.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-        lblUserBadge.ForeColor = ThemeHelper.WarmIvory;
+        lblUserBadge.ForeColor = Color.FromArgb(243, 235, 221);
         lblUserBadge.Location = new Point(680, 24);
         lblUserBadge.Name = "lblUserBadge";
         lblUserBadge.Size = new Size(300, 33);
@@ -156,7 +159,7 @@ partial class MainForm
         // 
         lblClock.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         lblClock.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-        lblClock.ForeColor = ThemeHelper.MutedGold;
+        lblClock.ForeColor = Color.FromArgb(198, 161, 91);
         lblClock.Location = new Point(990, 24);
         lblClock.Name = "lblClock";
         lblClock.Size = new Size(180, 33);
@@ -166,7 +169,7 @@ partial class MainForm
         // 
         // pnlMainContent
         // 
-        pnlMainContent.BackColor = ThemeHelper.WarmIvory;
+        pnlMainContent.BackColor = Color.FromArgb(243, 235, 221);
         pnlMainContent.Dock = DockStyle.Fill;
         pnlMainContent.Location = new Point(274, 87);
         pnlMainContent.Margin = new Padding(3, 4, 3, 4);
@@ -184,7 +187,7 @@ partial class MainForm
         // 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
-        BackColor = ThemeHelper.WarmIvory;
+        BackColor = Color.FromArgb(243, 235, 221);
         ClientSize = new Size(1463, 960);
         Controls.Add(pnlMainContent);
         Controls.Add(pnlHeader);
@@ -196,6 +199,7 @@ partial class MainForm
         Text = "UPPERCUT BARBER SHOP CRM";
         WindowState = FormWindowState.Maximized;
         pnlSidebar.ResumeLayout(false);
+        pnlSidebar.PerformLayout();
         pnlBrand.ResumeLayout(false);
         pnlHeader.ResumeLayout(false);
         pnlHeader.PerformLayout();

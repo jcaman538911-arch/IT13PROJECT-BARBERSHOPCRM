@@ -18,6 +18,7 @@ public static class DbHelper
         try
         {
             TenantConnectionFactory.InitializeAllTenantDatabases();
+            TenantConnectionFactory.InitializeMasterDatabase(); // Cloud Master DB for SuperAdmin (db70240)
         }
         catch (Exception ex)
         {

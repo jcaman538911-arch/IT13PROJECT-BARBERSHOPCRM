@@ -22,9 +22,20 @@ public static class ResponsiveLayoutHelper
     /// </summary>
     public static void Apply(Form form)
     {
+        EnableDoubleBuffering(form);
         form.AutoScroll = true;
         StretchEdgeControls(form);
         FixGrids(form.Controls);
+    }
+
+    public static void EnableDoubleBuffering(Control control)
+    {
+        try
+        {
+            var prop = typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            prop?.SetValue(control, true, null);
+        }
+        catch { }
     }
 
     /// <summary>
@@ -69,6 +80,7 @@ public static class ResponsiveLayoutHelper
     {
         foreach (Control ctrl in controls)
         {
+            EnableDoubleBuffering(ctrl);
             if (ctrl is DataGridView dgv)
             {
                 ApplyGridRules(dgv);

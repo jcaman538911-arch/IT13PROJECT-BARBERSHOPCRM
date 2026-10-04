@@ -172,7 +172,7 @@ BEGIN
         TransactionNumber NVARCHAR(50) NOT NULL UNIQUE,
         CustomerID INT NULL FOREIGN KEY REFERENCES Customers(CustomerID),
         CustomerName NVARCHAR(100) NOT NULL DEFAULT 'Walk-in Customer',
-        StaffID INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
+        StaffID INT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
         StaffName NVARCHAR(100) NOT NULL,
         BarberID INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
         BarberName NVARCHAR(100) NOT NULL,

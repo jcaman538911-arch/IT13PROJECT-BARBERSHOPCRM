@@ -62,7 +62,9 @@ partial class CustomerHistoryForm
         // cmbCustomers
         // 
         cmbCustomers.BackColor = Color.White;
-        cmbCustomers.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbCustomers.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbCustomers.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbCustomers.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbCustomers.Font = new Font("Segoe UI", 10F);
         cmbCustomers.ForeColor = ThemeHelper.TextPrimary;
         cmbCustomers.FormattingEnabled = true;

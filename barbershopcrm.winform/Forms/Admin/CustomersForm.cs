@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.domain;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
@@ -19,9 +20,9 @@ public partial class CustomersForm : Form
         LoadCustomers();
     }
 
-    private void LoadCustomers(string query = "")
+    private async void LoadCustomers(string query = "")
     {
-        var customers = SqlDataRepository.Instance.SearchCustomers(query);
+        var customers = await Task.Run(() => SqlDataRepository.Instance.SearchCustomers(query, includeInactive: true));
         dgvCustomers.DataSource = customers.Select(c => new
         {
             c.Id,
@@ -37,22 +38,28 @@ public partial class CustomersForm : Form
 
     private void dgvCustomers_SelectionChanged(object sender, EventArgs e)
     {
-        if (dgvCustomers.CurrentRow != null && dgvCustomers.CurrentRow.DataBoundItem != null)
-        {
-            dynamic item = dgvCustomers.CurrentRow.DataBoundItem;
-            _selectedCustomerId = item.Id;
+        if (dgvCustomers.CurrentRow?.DataBoundItem == null) return;
 
-            var cust = SqlDataRepository.Instance.GetCustomerById(_selectedCustomerId);
-            if (cust != null)
-            {
-                txtFullName.Text = cust.FullName;
-                txtPhone.Text = cust.PhoneNumber;
-                txtEmail.Text = cust.Email;
-                dtpBirthday.Value = cust.Birthday ?? DateTime.Today;
-                chkLoyaltyMember.Checked = cust.IsLoyaltyMember;
-                numLoyaltyPoints.Value = cust.LoyaltyPoints;
-            }
+        dynamic item = dgvCustomers.CurrentRow.DataBoundItem;
+        _selectedCustomerId = item.Id;
+
+        var cust = SqlDataRepository.Instance.GetCustomerById(_selectedCustomerId);
+        if (cust != null)
+        {
+            txtFullName.Text = cust.FullName;
+            txtPhone.Text = cust.PhoneNumber;
+            txtEmail.Text = cust.Email;
+            dtpBirthday.Value = cust.Birthday ?? DateTime.Today;
+            chkLoyaltyMember.Checked = cust.IsLoyaltyMember;
+            numLoyaltyPoints.Value = cust.LoyaltyPoints;
         }
+    }
+
+    private int GetCurrentRowId()
+    {
+        if (dgvCustomers.CurrentRow?.DataBoundItem == null) return _selectedCustomerId;
+        dynamic item = dgvCustomers.CurrentRow.DataBoundItem;
+        return item.Id;
     }
 
     private void btnAdd_Click(object sender, EventArgs e)
@@ -114,17 +121,18 @@ public partial class CustomersForm : Form
 
     private void btnDelete_Click(object sender, EventArgs e)
     {
-        if (_selectedCustomerId == 0)
+        int id = GetCurrentRowId();
+        if (id == 0)
         {
             MessageBox.Show("Please select a customer to delete.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        var result = MessageBox.Show($"Are you sure you want to delete customer ID {_selectedCustomerId}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        var result = MessageBox.Show($"Are you sure you want to delete this customer?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
         if (result == DialogResult.Yes)
         {
-            SqlDataRepository.Instance.DeleteCustomer(_selectedCustomerId);
-            SqlDataRepository.Instance.AddSystemLog("WARN", "Customers", $"Deleted customer ID {_selectedCustomerId}", "user");
+            SqlDataRepository.Instance.DeleteCustomer(id);
+            SqlDataRepository.Instance.AddSystemLog("WARN", "Customers", $"Deleted customer ID {id}", "user");
             MessageBox.Show("Customer deleted successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
             ClearForm();
             LoadCustomers();

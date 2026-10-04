@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.domain;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
@@ -20,8 +21,11 @@ public partial class LoyaltyRewardsForm : Form
         ThemeHelper.ApplyModernGrid(dgvLoyaltyRewards);
         ThemeHelper.ApplyModernGrid(dgvLoyaltyHistory);
         ConfigureRoleAccess();
-        LoadRewards();
-        LoadLoyaltyHistory();
+        this.Load += async (s, e) => 
+        {
+            await LoadRewardsAsync();
+            await LoadLoyaltyHistoryAsync();
+        };
     }
 
     private void ConfigureRoleAccess()
@@ -39,9 +43,9 @@ public partial class LoyaltyRewardsForm : Form
         }
     }
 
-    private void LoadRewards()
+    private async Task LoadRewardsAsync()
     {
-        var rewards = SqlDataRepository.Instance.GetLoyaltyRewards();
+        var rewards = await Task.Run(() => SqlDataRepository.Instance.GetLoyaltyRewards());
         dgvLoyaltyRewards.DataSource = rewards.Select(r => new
         {
             r.Id,
@@ -52,11 +56,11 @@ public partial class LoyaltyRewardsForm : Form
         }).ToList();
     }
 
-    private void LoadLoyaltyHistory()
+    private async Task LoadLoyaltyHistoryAsync()
     {
         try
         {
-            var history = SqlDataRepository.Instance.GetAllLoyaltyHistory();
+            var history = await Task.Run(() => SqlDataRepository.Instance.GetAllLoyaltyHistory());
             dgvLoyaltyHistory.DataSource = history.Select(h => new
             {
                 Date = h.DateCreated.ToString("yyyy-MM-dd HH:mm"),
@@ -111,10 +115,10 @@ public partial class LoyaltyRewardsForm : Form
 
         SqlDataRepository.Instance.AddLoyaltyReward(reward);
         SqlDataRepository.Instance.AddSystemLog("INFO", "Loyalty", $"Added reward tier '{reward.RewardName}'", "admin");
-        LoadLoyaltyHistory();
+        _ = LoadLoyaltyHistoryAsync();
         MessageBox.Show("Loyalty Reward created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         ClearForm();
-        LoadRewards();
+        _ = LoadRewardsAsync();
     }
 
     private void btnUpdate_Click(object sender, EventArgs e)
@@ -138,10 +142,10 @@ public partial class LoyaltyRewardsForm : Form
 
         SqlDataRepository.Instance.UpdateLoyaltyReward(reward);
         SqlDataRepository.Instance.AddSystemLog("INFO", "Loyalty", $"Updated reward ID {_selectedRewardId} '{reward.RewardName}'", "admin");
-        LoadLoyaltyHistory();
+        _ = LoadLoyaltyHistoryAsync();
         MessageBox.Show("Loyalty Reward updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         ClearForm();
-        LoadRewards();
+        _ = LoadRewardsAsync();
     }
 
     private void btnDelete_Click(object sender, EventArgs e)
@@ -155,7 +159,7 @@ public partial class LoyaltyRewardsForm : Form
             SqlDataRepository.Instance.AddSystemLog("WARN", "Loyalty", $"Deleted reward ID {_selectedRewardId}", "admin");
             MessageBox.Show("Loyalty Reward deleted successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
             ClearForm();
-            LoadRewards();
+            _ = LoadRewardsAsync();
         }
     }
 

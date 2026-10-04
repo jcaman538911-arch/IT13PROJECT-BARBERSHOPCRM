@@ -68,7 +68,9 @@ partial class StockTransactionForm
 
         cmbItem.Location = new Point(20, 45);
         cmbItem.Size = new Size(300, 28);
-        cmbItem.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbItem.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbItem.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbItem.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbItem.Font = BarberShopCRM.Helpers.ThemeHelper.BodyFont;
 
         lblTxnType.Text = "Transaction Type:";
@@ -78,7 +80,9 @@ partial class StockTransactionForm
 
         cmbTxnType.Location = new Point(20, 115);
         cmbTxnType.Size = new Size(300, 28);
-        cmbTxnType.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbTxnType.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbTxnType.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbTxnType.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbTxnType.Font = BarberShopCRM.Helpers.ThemeHelper.BodyFont;
 
         lblQuantity.Text = "Quantity:";

@@ -82,7 +82,9 @@ public class CustomerConcernsForm : Form
 
         panel.Controls.Add(Caption("Type"), 0, 3);
         cmbType.Dock = DockStyle.Fill;
-        cmbType.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbType.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbType.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbType.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbType.Items.AddRange(new object[] { "Complaint", "Inquiry", "Feedback" });
         cmbType.SelectedIndex = 0;
         panel.Controls.Add(cmbType, 0, 4);
@@ -119,7 +121,9 @@ public class CustomerConcernsForm : Form
 
         var toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
         cmbFilter.Width = 150;
-        cmbFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbFilter.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbFilter.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbFilter.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbFilter.Items.AddRange(new object[] { "Unresolved", "All", "Resolved" });
         cmbFilter.SelectedIndex = 0;
         cmbFilter.Margin = new Padding(0, 4, 8, 0);

@@ -69,12 +69,14 @@ partial class RecordBarberAttendanceForm
         lblBarber.Name = "lblBarber";
         lblBarber.Size = new Size(88, 17);
         lblBarber.TabIndex = 0;
-        lblBarber.Text = "Select Barber";
+        lblBarber.Text = "Select Employee (Barber / Staff)";
         // 
         // cmbBarber
         // 
         cmbBarber.BackColor = Color.White;
-        cmbBarber.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbBarber.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbBarber.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbBarber.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbBarber.Font = new Font("Segoe UI", 10F);
         cmbBarber.ForeColor = ThemeHelper.TextPrimary;
         cmbBarber.FormattingEnabled = true;
@@ -158,7 +160,9 @@ partial class RecordBarberAttendanceForm
         // cmbStatus
         // 
         cmbStatus.BackColor = Color.White;
-        cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbStatus.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbStatus.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbStatus.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbStatus.Font = new Font("Segoe UI", 10F);
         cmbStatus.ForeColor = ThemeHelper.TextPrimary;
         cmbStatus.FormattingEnabled = true;

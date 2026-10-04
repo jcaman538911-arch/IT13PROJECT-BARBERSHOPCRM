@@ -145,7 +145,7 @@ public class SqlDataRepository : ISqlDataRepository
                 try
                 {
                     using var conn = TenantConnectionFactory.GetConnection(tId);
-                    conn.Open();
+                    conn.OpenWithRetry();
                     string sql = @"SELECT UserID, Username, PasswordHash, Role, FullName, AccountStatus, EmployeeID, BranchID, CreatedAt 
                                    FROM Users 
                                    WHERE Username = @Username AND PasswordHash = @Password AND AccountStatus = 'ACTIVE'";
@@ -194,8 +194,8 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<User>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT UserID, Username, PasswordHash, Role, FullName, AccountStatus, EmployeeID, BranchID, CreatedAt FROM Users ORDER BY UserID DESC";
+        conn.OpenWithRetry();
+        string sql = "SELECT UserID, Username, PasswordHash, Role, FullName, AccountStatus, EmployeeID, BranchID, CreatedAt FROM Users WHERE AccountStatus = 'ACTIVE' ORDER BY UserID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -220,7 +220,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddUser(User user)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"INSERT INTO Users (Username, PasswordHash, Role, FullName, AccountStatus, EmployeeID, BranchID, CreatedAt)
                        VALUES (@Username, @Password, @Role, @FullName, @AccountStatus, @EmployeeID, @BranchID, GETDATE());
                        SELECT SCOPE_IDENTITY();";
@@ -239,7 +239,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateUser(User user)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"UPDATE Users 
                        SET Username = @Username, PasswordHash = @Password, Role = @Role, FullName = @FullName, 
                            AccountStatus = @AccountStatus, EmployeeID = @EmployeeID, BranchID = @BranchID, UpdatedAt = GETDATE()
@@ -260,7 +260,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteUser(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Users SET AccountStatus = 'INACTIVE' WHERE UserID = @UserID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@UserID", id);
@@ -268,13 +268,14 @@ public class SqlDataRepository : ISqlDataRepository
     }
 
     // --- Employees ---
-    public List<Employee> GetEmployees()
+    public List<Employee> GetEmployees(bool includeInactive = false)
     {
         EnsureNotSuperAdmin();
         var list = new List<Employee>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT EmployeeID, FirstName, LastName, ContactNumber, EmployeeType, Status, BranchID FROM Employees ORDER BY EmployeeID DESC";
+        conn.OpenWithRetry();
+        string statusFilter = includeInactive ? "" : "WHERE Status = 'ACTIVE'";
+        string sql = $"SELECT EmployeeID, FirstName, LastName, ContactNumber, EmployeeType, Status, BranchID FROM Employees {statusFilter} ORDER BY EmployeeID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -305,7 +306,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddEmployee(Employee emp)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string fName = string.IsNullOrWhiteSpace(emp.FirstName) ? emp.Name.Split(' ')[0] : emp.FirstName;
         string lName = string.IsNullOrWhiteSpace(emp.LastName) ? (emp.Name.Contains(" ") ? emp.Name.Substring(emp.Name.IndexOf(' ') + 1) : "") : emp.LastName;
 
@@ -336,7 +337,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateEmployee(Employee emp)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string fName = string.IsNullOrWhiteSpace(emp.FirstName) ? emp.Name.Split(' ')[0] : emp.FirstName;
         string lName = string.IsNullOrWhiteSpace(emp.LastName) ? (emp.Name.Contains(" ") ? emp.Name.Substring(emp.Name.IndexOf(' ') + 1) : "") : emp.LastName;
 
@@ -359,7 +360,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteEmployee(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Employees SET Status = 'INACTIVE' WHERE EmployeeID = @EmployeeID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@EmployeeID", id);
@@ -367,50 +368,55 @@ public class SqlDataRepository : ISqlDataRepository
     }
 
     // --- Customers ---
-    public List<Customer> GetCustomers()
+    public List<Customer> GetCustomers(bool includeInactive = false)
     {
         EnsureNotSuperAdmin();
-        var list = new List<Customer>();
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT CustomerID, FirstName, LastName, PhoneNumber, Email, Birthday, IsLoyaltyMember, LoyaltyPoints, Status, CreatedAt FROM Customers ORDER BY CustomerID DESC";
-        using var cmd = new SqlCommand(sql, conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        return DbRetry.Execute(() =>
         {
-            string fName = reader.GetString(reader.GetOrdinal("FirstName"));
-            string lName = reader.GetString(reader.GetOrdinal("LastName"));
-            list.Add(new Customer
+            var list = new List<Customer>();
+            using var conn = TenantConnectionFactory.GetConnection();
+            conn.OpenWithRetry();
+            string statusFilter = includeInactive ? "" : "WHERE Status = 'ACTIVE'";
+            string sql = $"SELECT CustomerID, FirstName, LastName, PhoneNumber, Email, Birthday, IsLoyaltyMember, LoyaltyPoints, Status, CreatedAt FROM Customers {statusFilter} ORDER BY CustomerID DESC";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.CommandTimeout = 30;
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                Id = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                FirstName = fName,
-                LastName = lName,
-                FullName = $"{fName} {lName}".Trim(),
-                PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? "" : reader.GetString(reader.GetOrdinal("PhoneNumber")),
-                Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? "" : reader.GetString(reader.GetOrdinal("Email")),
-                Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
-                IsLoyaltyMember = reader.GetBoolean(reader.GetOrdinal("IsLoyaltyMember")),
-                LoyaltyPoints = reader.GetInt32(reader.GetOrdinal("LoyaltyPoints")),
-                Status = reader.GetString(reader.GetOrdinal("Status")),
-                CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
-            });
-        }
-        return list;
+                string fName = reader.GetString(reader.GetOrdinal("FirstName"));
+                string lName = reader.GetString(reader.GetOrdinal("LastName"));
+                list.Add(new Customer
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                    FirstName = fName,
+                    LastName = lName,
+                    FullName = $"{fName} {lName}".Trim(),
+                    PhoneNumber = reader.IsDBNull(reader.GetOrdinal("PhoneNumber")) ? "" : reader.GetString(reader.GetOrdinal("PhoneNumber")),
+                    Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? "" : reader.GetString(reader.GetOrdinal("Email")),
+                    Birthday = reader.IsDBNull(reader.GetOrdinal("Birthday")) ? null : reader.GetDateTime(reader.GetOrdinal("Birthday")),
+                    IsLoyaltyMember = reader.GetBoolean(reader.GetOrdinal("IsLoyaltyMember")),
+                    LoyaltyPoints = reader.GetInt32(reader.GetOrdinal("LoyaltyPoints")),
+                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                    CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+                });
+            }
+            return list;
+        });
     }
 
     public Customer? GetCustomerById(int id)
     {
-        return GetCustomers().Find(c => c.Id == id);
+        return GetCustomers(includeInactive: true).Find(c => c.Id == id);
     }
 
-    public List<Customer> SearchCustomers(string query)
+    public List<Customer> SearchCustomers(string query, bool includeInactive = false)
     {
-        if (string.IsNullOrWhiteSpace(query)) return GetCustomers();
+        if (string.IsNullOrWhiteSpace(query)) return GetCustomers(includeInactive);
         query = query.ToLower();
-        return GetCustomers().FindAll(c =>
-            c.FullName.ToLower().Contains(query) ||
-            c.PhoneNumber.Contains(query) ||
-            c.Email.ToLower().Contains(query) ||
+        return GetCustomers(includeInactive).FindAll(c =>
+            c.FullName.StartsWith(query, StringComparison.OrdinalIgnoreCase) ||
+            c.PhoneNumber.StartsWith(query) ||
+            c.Email.StartsWith(query, StringComparison.OrdinalIgnoreCase) ||
             c.Id.ToString() == query ||
             $"uc-{c.Id:d6}" == query);
     }
@@ -418,7 +424,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddCustomer(Customer customer)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string fName = string.IsNullOrWhiteSpace(customer.FirstName) ? customer.FullName.Split(' ')[0] : customer.FirstName;
         string lName = string.IsNullOrWhiteSpace(customer.LastName) ? (customer.FullName.Contains(" ") ? customer.FullName.Substring(customer.FullName.IndexOf(' ') + 1) : "") : customer.LastName;
 
@@ -449,7 +455,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateCustomer(Customer customer)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string fName = string.IsNullOrWhiteSpace(customer.FirstName) ? customer.FullName.Split(' ')[0] : customer.FirstName;
         string lName = string.IsNullOrWhiteSpace(customer.LastName) ? (customer.FullName.Contains(" ") ? customer.FullName.Substring(customer.FullName.IndexOf(' ') + 1) : "") : customer.LastName;
 
@@ -486,7 +492,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteCustomer(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Customers SET Status = 'INACTIVE' WHERE CustomerID = @CustomerID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@CustomerID", id);
@@ -496,30 +502,34 @@ public class SqlDataRepository : ISqlDataRepository
     // --- Services & Base Pricing ---
     public List<ServiceItem> GetServices()
     {
-        var list = new List<ServiceItem>();
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT ServiceID, ServiceName, Description, BasePrice, Status FROM Services ORDER BY ServiceID DESC";
-        using var cmd = new SqlCommand(sql, conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        return DbRetry.Execute(() =>
         {
-            list.Add(new ServiceItem
+            var list = new List<ServiceItem>();
+            using var conn = TenantConnectionFactory.GetConnection();
+            conn.OpenWithRetry();
+            string sql = "SELECT ServiceID, ServiceName, Description, BasePrice, Status FROM Services WHERE Status = 'ACTIVE' ORDER BY ServiceID DESC";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.CommandTimeout = 30;
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                Id = reader.GetInt32(reader.GetOrdinal("ServiceID")),
-                ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
-                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
-                BasePrice = reader.GetDecimal(reader.GetOrdinal("BasePrice")),
-                IsActive = reader.GetString(reader.GetOrdinal("Status")).Equals("ACTIVE", StringComparison.OrdinalIgnoreCase)
-            });
-        }
-        return list;
+                list.Add(new ServiceItem
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("ServiceID")),
+                    ServiceName = reader.GetString(reader.GetOrdinal("ServiceName")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? "" : reader.GetString(reader.GetOrdinal("Description")),
+                    BasePrice = reader.GetDecimal(reader.GetOrdinal("BasePrice")),
+                    IsActive = reader.GetString(reader.GetOrdinal("Status")).Equals("ACTIVE", StringComparison.OrdinalIgnoreCase)
+                });
+            }
+            return list;
+        });
     }
 
     public void AddService(ServiceItem service)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"INSERT INTO Services (ServiceName, Description, BasePrice, Status, CreatedAt)
                        VALUES (@ServiceName, @Description, @BasePrice, @Status, GETDATE());
                        SELECT SCOPE_IDENTITY();";
@@ -535,7 +545,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateService(ServiceItem service)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"UPDATE Services 
                        SET ServiceName = @ServiceName, Description = @Description, 
                            BasePrice = @BasePrice, Status = @Status, UpdatedAt = GETDATE()
@@ -553,7 +563,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteService(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Services SET Status = 'INACTIVE' WHERE ServiceID = @ServiceID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@ServiceID", id);
@@ -565,8 +575,8 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<Promotion>();
         using var conn = TenantConnectionFactory.GetConnection();
-         conn.Open();
-        string sql = "SELECT PromotionID, Title, Description, DiscountType, DiscountValue, StartDate, EndDate, EligibilityRule, Status FROM Promotions ORDER BY PromotionID DESC";
+         conn.OpenWithRetry();
+        string sql = "SELECT PromotionID, Title, Description, DiscountType, DiscountValue, StartDate, EndDate, EligibilityRule, Status FROM Promotions WHERE Status = 'ACTIVE' ORDER BY PromotionID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -595,7 +605,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddPromotion(Promotion promo)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"INSERT INTO Promotions (Title, Description, DiscountType, DiscountValue, StartDate, EndDate, EligibilityRule, Status, CreatedAt)
                        VALUES (@Title, @Description, @DiscountType, @DiscountValue, @StartDate, @EndDate, @EligibilityRule, @Status, GETDATE());
                        SELECT SCOPE_IDENTITY();";
@@ -615,7 +625,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdatePromotion(Promotion promo)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"UPDATE Promotions 
                        SET Title = @Title, Description = @Description, DiscountType = @DiscountType, 
                            DiscountValue = @DiscountValue, StartDate = @StartDate, EndDate = @EndDate, 
@@ -638,7 +648,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeletePromotion(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Promotions SET Status = 'INACTIVE' WHERE PromotionID = @PromotionID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@PromotionID", id);
@@ -650,8 +660,8 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<LoyaltyReward>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT RewardID, RewardName, RequiredPoints, DiscountAmount, Status FROM LoyaltyRewards ORDER BY RewardID DESC";
+        conn.OpenWithRetry();
+        string sql = "SELECT RewardID, RewardName, RequiredPoints, DiscountAmount, Status FROM LoyaltyRewards WHERE Status = 'ACTIVE' ORDER BY RewardID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -671,7 +681,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddLoyaltyReward(LoyaltyReward reward)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"INSERT INTO LoyaltyRewards (RewardName, RequiredPoints, DiscountAmount, Status, CreatedAt)
                        VALUES (@RewardName, @RequiredPoints, @DiscountAmount, @Status, GETDATE());
                        SELECT SCOPE_IDENTITY();";
@@ -687,7 +697,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateLoyaltyReward(LoyaltyReward reward)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"UPDATE LoyaltyRewards 
                        SET RewardName = @RewardName, RequiredPoints = @RequiredPoints, 
                            DiscountAmount = @DiscountAmount, Status = @Status, UpdatedAt = GETDATE()
@@ -705,7 +715,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteLoyaltyReward(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE LoyaltyRewards SET Status = 'INACTIVE' WHERE RewardID = @RewardID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@RewardID", id);
@@ -717,8 +727,20 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<AttendanceRecord>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT AttendanceID, EmployeeID, EmployeeName, AttendanceDate, TimeIn, TimeOut, Status, Notes FROM Attendance ORDER BY AttendanceDate DESC, AttendanceID DESC";
+        conn.OpenWithRetry();
+        string sql = @"
+            SELECT 
+                a.AttendanceID, 
+                a.EmployeeID, 
+                COALESCE(LTRIM(RTRIM(e.FirstName + ' ' + e.LastName)), a.EmployeeName) AS EmployeeName, 
+                a.AttendanceDate, 
+                a.TimeIn, 
+                a.TimeOut, 
+                a.Status, 
+                a.Notes 
+            FROM Attendance a
+            LEFT JOIN Employees e ON a.EmployeeID = e.EmployeeID
+            ORDER BY a.AttendanceDate DESC, a.AttendanceID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -739,15 +761,16 @@ public class SqlDataRepository : ISqlDataRepository
         return list;
     }
 
-    public List<AttendanceRecord> GetTodayAttendance()
+    public List<AttendanceRecord> GetTodayAttendance(DateTime? date = null)
     {
-        return GetAttendanceRecords().FindAll(a => a.Date.Date == DateTime.Today);
+        var targetDate = date?.Date ?? DateTime.Today;
+        return GetAttendanceRecords().FindAll(a => a.Date.Date == targetDate);
     }
 
     public void RecordAttendance(AttendanceRecord record)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string checkSql = "SELECT AttendanceID FROM Attendance WHERE EmployeeID = @EmpID AND AttendanceDate = @AttDate";
         using var checkCmd = new SqlCommand(checkSql, conn);
         checkCmd.Parameters.AddWithValue("@EmpID", record.EmployeeId);
@@ -789,52 +812,66 @@ public class SqlDataRepository : ISqlDataRepository
     public List<Transaction> GetTransactions()
     {
         var list = new List<Transaction>();
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = @"SELECT TransactionID, TransactionNumber, CustomerID, CustomerName, StaffID, StaffName, 
-                              BarberID, BarberName, ServiceID, ServiceName, Subtotal, DiscountAmount, FinalAmount, 
-                              PaymentMethod, Status, PromotionID, LoyaltyRewardID, PointsEarned, PointsRedeemed, 
-                              AmountReceived, ChangeAmount, TransactionDate 
-                       FROM Transactions ORDER BY TransactionDate DESC";
-        using var cmd = new SqlCommand(sql, conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        try
         {
-            Enum.TryParse<PaymentMethod>(GetOrDefault(reader, "PaymentMethod", ""), true, out var pm);
-            Enum.TryParse<TransactionStatus>(GetOrDefault(reader, "Status", ""), true, out var st);
-
-            list.Add(new Transaction
+            using var conn = TenantConnectionFactory.GetOpenConnection();
+            string sql = @"SELECT t.TransactionID, t.TransactionNumber, t.CustomerID, 
+                                  COALESCE(LTRIM(RTRIM(c.FirstName + ' ' + c.LastName)), t.CustomerName) AS CustomerName, 
+                                  t.StaffID, COALESCE(LTRIM(RTRIM(es.FirstName + ' ' + es.LastName)), t.StaffName) AS StaffName, 
+                                  t.BarberID, COALESCE(LTRIM(RTRIM(eb.FirstName + ' ' + eb.LastName)), t.BarberName) AS BarberName, 
+                                  t.ServiceID, t.ServiceName, t.Subtotal, t.DiscountAmount, t.FinalAmount, 
+                                  t.PaymentMethod, t.Status, t.PromotionID, t.LoyaltyRewardID, t.PointsEarned, t.PointsRedeemed, 
+                                  t.AmountReceived, t.ChangeAmount, t.TransactionDate 
+                           FROM Transactions t
+                           LEFT JOIN Customers c ON t.CustomerID = c.CustomerID
+                           LEFT JOIN Employees es ON t.StaffID = es.EmployeeID
+                           LEFT JOIN Employees eb ON t.BarberID = eb.EmployeeID
+                           ORDER BY t.TransactionDate DESC";
+            using var cmd = new SqlCommand(sql, conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                Id = reader.GetInt32(reader.GetOrdinal("TransactionID")),
-                TransactionNumber = GetOrDefault(reader, "TransactionNumber", ""),
-                CustomerId = GetOrDefault<int?>(reader, "CustomerID", null),
-                CustomerName = GetOrDefault(reader, "CustomerName", "Walk-in Customer"),
-                StaffId = GetOrDefault(reader, "StaffID", 0),
-                StaffName = GetOrDefault(reader, "StaffName", ""),
-                BarberId = GetOrDefault(reader, "BarberID", 0),
-                BarberName = GetOrDefault(reader, "BarberName", ""),
-                ServiceId = GetOrDefault(reader, "ServiceID", 1),
-                ServiceName = GetOrDefault(reader, "ServiceName", ""),
-                Subtotal = GetOrDefault(reader, "Subtotal", 0m),
-                DiscountAmount = GetOrDefault(reader, "DiscountAmount", 0m),
-                FinalAmount = GetOrDefault(reader, "FinalAmount", 0m),
-                PaymentMethod = pm,
-                Status = st,
-                PromotionId = GetOrDefault<int?>(reader, "PromotionID", null),
-                LoyaltyRewardId = GetOrDefault<int?>(reader, "LoyaltyRewardID", null),
-                PointsEarned = GetOrDefault(reader, "PointsEarned", 0),
-                PointsRedeemed = GetOrDefault(reader, "PointsRedeemed", 0),
-                AmountReceived = GetOrDefault(reader, "AmountReceived", 0m),
-                ChangeAmount = GetOrDefault(reader, "ChangeAmount", 0m),
-                TransactionDate = GetOrDefault(reader, "TransactionDate", DateTime.Now)
-            });
+                Enum.TryParse<PaymentMethod>(GetOrDefault(reader, "PaymentMethod", ""), true, out var pm);
+                Enum.TryParse<TransactionStatus>(GetOrDefault(reader, "Status", ""), true, out var st);
+
+                list.Add(new Transaction
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("TransactionID")),
+                    TransactionNumber = GetOrDefault(reader, "TransactionNumber", ""),
+                    CustomerId = GetOrDefault<int?>(reader, "CustomerID", null),
+                    CustomerName = GetOrDefault(reader, "CustomerName", "Walk-in Customer"),
+                    StaffId = GetOrDefault(reader, "StaffID", 0),
+                    StaffName = GetOrDefault(reader, "StaffName", ""),
+                    BarberId = GetOrDefault(reader, "BarberID", 0),
+                    BarberName = GetOrDefault(reader, "BarberName", ""),
+                    ServiceId = GetOrDefault(reader, "ServiceID", 1),
+                    ServiceName = GetOrDefault(reader, "ServiceName", ""),
+                    Subtotal = GetOrDefault(reader, "Subtotal", 0m),
+                    DiscountAmount = GetOrDefault(reader, "DiscountAmount", 0m),
+                    FinalAmount = GetOrDefault(reader, "FinalAmount", 0m),
+                    PaymentMethod = pm,
+                    Status = st,
+                    PromotionId = GetOrDefault<int?>(reader, "PromotionID", null),
+                    LoyaltyRewardId = GetOrDefault<int?>(reader, "LoyaltyRewardID", null),
+                    PointsEarned = GetOrDefault(reader, "PointsEarned", 0),
+                    PointsRedeemed = GetOrDefault(reader, "PointsRedeemed", 0),
+                    AmountReceived = GetOrDefault(reader, "AmountReceived", 0m),
+                    ChangeAmount = GetOrDefault(reader, "ChangeAmount", 0m),
+                    TransactionDate = GetOrDefault(reader, "TransactionDate", DateTime.Now)
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SqlDataRepository] GetTransactions warning: {ex.Message}");
         }
         return list;
     }
 
-    public List<Transaction> GetTodayTransactions()
+    public List<Transaction> GetTodayTransactions(DateTime? date = null)
     {
-        return GetTransactions().FindAll(t => t.TransactionDate.Date == DateTime.Today);
+        var targetDate = date?.Date ?? DateTime.Today;
+        return GetTransactions().FindAll(t => t.TransactionDate.Date == targetDate);
     }
 
     public List<Transaction> GetCustomerTransactions(int customerId)
@@ -845,7 +882,7 @@ public class SqlDataRepository : ISqlDataRepository
     public string GenerateTransactionNumber()
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "SELECT COUNT(*) FROM Transactions";
         using var cmd = new SqlCommand(sql, conn);
         int count = Convert.ToInt32(cmd.ExecuteScalar()) + 1;
@@ -859,7 +896,7 @@ public class SqlDataRepository : ISqlDataRepository
     /// Best-effort migration: extends LoyaltyTransactions with activity metadata
     /// and enforces one loyalty record per transaction (prevents double point awards).
     /// </summary>
-    private void EnsureLoyaltySchema(SqlConnection conn, SqlTransaction dbTxn)
+    private void EnsureLoyaltySchema(SqlConnection conn)
     {
         if (_loyaltySchemaEnsured) return;
         lock (_loyaltySchemaLock)
@@ -877,7 +914,7 @@ public class SqlDataRepository : ISqlDataRepository
                     IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_LoyaltyTransactions_TransactionID')
                         CREATE UNIQUE NONCLUSTERED INDEX UX_LoyaltyTransactions_TransactionID
                             ON LoyaltyTransactions(TransactionID) WHERE TransactionID IS NOT NULL;";
-                using var cmd = new SqlCommand(sql, conn, dbTxn);
+                using var cmd = new SqlCommand(sql, conn);
                 cmd.ExecuteNonQuery();
             }
             catch
@@ -890,19 +927,33 @@ public class SqlDataRepository : ISqlDataRepository
 
     public void SaveTransaction(Transaction txn)
     {
+        // Run one-time schema migrations on a SEPARATE connection so that any
+        // error or implicit rollback from the DDL statement cannot close the
+        // connection we are about to use for the real transaction below.
+        try
+        {
+            using var schemaConn = TenantConnectionFactory.GetConnection();
+            schemaConn.OpenWithRetry();
+            EnsureLoyaltySchema(schemaConn);
+            using var altCmd = new SqlCommand(
+                "ALTER TABLE Transactions ALTER COLUMN StaffID INT NULL", schemaConn);
+            altCmd.ExecuteNonQuery();
+        }
+        catch { /* Ignore — already applied or DDL not supported on this schema version */ }
+
+        // Open a fresh connection for the actual transaction work.
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
+
         using var dbTxn = conn.BeginTransaction();
         try
         {
-            EnsureLoyaltySchema(conn, dbTxn);
-
             SaveTransactionCore(txn, conn, dbTxn);
             dbTxn.Commit();
         }
         catch
         {
-            dbTxn.Rollback();
+            try { dbTxn.Rollback(); } catch { /* connection may already be dead */ }
             throw;
         }
     }
@@ -952,9 +1003,22 @@ public class SqlDataRepository : ISqlDataRepository
         else
         {
             string sql = @"UPDATE Transactions 
-                           SET Status = @Status, PaymentMethod = @PM, AmountReceived = @AmtRec, 
-                               ChangeAmount = @ChangeAmt, FinalAmount = @Final, DiscountAmount = @Discount, 
-                               PointsEarned = @PtsEarned, PointsRedeemed = @PtsRedeemed
+                           SET Status        = @Status,
+                               PaymentMethod = @PM,
+                               AmountReceived= @AmtRec, 
+                               ChangeAmount  = @ChangeAmt,
+                               FinalAmount   = @Final,
+                               DiscountAmount= @Discount, 
+                               PointsEarned  = @PtsEarned,
+                               PointsRedeemed= @PtsRedeemed,
+                               CustomerID    = @CustID,
+                               CustomerName  = @CustName,
+                               BarberID      = @BarberID,
+                               BarberName    = @BarberName,
+                               ServiceID     = @SvcID,
+                               ServiceName   = @SvcName,
+                               PromotionID   = @PromoID,
+                               LoyaltyRewardID = @RewardID
                            WHERE TransactionID = @TxnID";
             using var cmd = new SqlCommand(sql, conn, dbTxn);
             cmd.Parameters.AddWithValue("@TxnID", txn.Id);
@@ -966,6 +1030,14 @@ public class SqlDataRepository : ISqlDataRepository
             cmd.Parameters.AddWithValue("@Discount", txn.DiscountAmount);
             cmd.Parameters.AddWithValue("@PtsEarned", txn.PointsEarned);
             cmd.Parameters.AddWithValue("@PtsRedeemed", txn.PointsRedeemed);
+            cmd.Parameters.AddWithValue("@CustID", (object?)txn.CustomerId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@CustName", txn.CustomerName ?? "Walk-in Customer");
+            cmd.Parameters.AddWithValue("@BarberID", txn.BarberId > 0 ? (object)txn.BarberId : DBNull.Value);
+            cmd.Parameters.AddWithValue("@BarberName", txn.BarberName ?? "Barber");
+            cmd.Parameters.AddWithValue("@SvcID", (object?)txn.ServiceId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@SvcName", txn.ServiceName ?? "");
+            cmd.Parameters.AddWithValue("@PromoID", (object?)txn.PromotionId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@RewardID", (object?)txn.LoyaltyRewardId ?? DBNull.Value);
             cmd.ExecuteNonQuery();
         }
 
@@ -1079,7 +1151,7 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<LoyaltyHistoryEntry>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"SELECT * FROM LoyaltyTransactions WHERE CustomerID = @CustID ORDER BY DateCreated DESC";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@CustID", customerId);
@@ -1130,7 +1202,7 @@ public class SqlDataRepository : ISqlDataRepository
         EnsureNotSuperAdmin();
         var list = new List<LoyaltyHistoryEntry>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"SELECT lt.*, c.FirstName + ' ' + c.LastName AS CustomerName
                        FROM LoyaltyTransactions lt
                        INNER JOIN Customers c ON lt.CustomerID = c.CustomerID
@@ -1161,7 +1233,7 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<InventoryItem>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"SELECT i.InventoryItemID, i.ItemName, i.Category, i.Quantity, i.Unit, i.MinimumStockLevel, 
                               i.SupplierID, s.SupplierName, i.Cost, i.Status, i.BranchID, i.CreatedAt, i.UpdatedAt 
                        FROM InventoryItems i 
@@ -1198,7 +1270,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddInventoryItem(InventoryItem item)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string status = item.Quantity <= 0 ? "OUT OF STOCK" : (item.Quantity <= item.MinimumStockLevel ? "LOW STOCK" : "IN STOCK");
         string sql = @"INSERT INTO InventoryItems (ItemName, Category, Quantity, Unit, MinimumStockLevel, SupplierID, Cost, Status, BranchID, CreatedAt)
                        VALUES (@ItemName, @Category, @Quantity, @Unit, @MinLevel, @SupplierID, @Cost, @Status, @BranchID, GETDATE());
@@ -1220,7 +1292,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateInventoryItem(InventoryItem item)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string status = item.Quantity <= 0 ? "OUT OF STOCK" : (item.Quantity <= item.MinimumStockLevel ? "LOW STOCK" : "IN STOCK");
         string sql = @"UPDATE InventoryItems 
                        SET ItemName = @ItemName, Category = @Category, Quantity = @Quantity, Unit = @Unit, 
@@ -1245,7 +1317,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteInventoryItem(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "DELETE FROM InventoryItems WHERE InventoryItemID = @ItemID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@ItemID", id);
@@ -1255,7 +1327,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void RecordStockTransaction(InventoryTransaction txn)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
 
         // 1. Insert Inventory Transaction log
         string sql = @"INSERT INTO InventoryTransactions (InventoryItemID, TransactionType, Quantity, DateCreated, RecordedBy, Notes)
@@ -1292,7 +1364,7 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<InventoryTransaction>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"SELECT t.InventoryTransactionID, t.InventoryItemID, i.ItemName, t.TransactionType, 
                               t.Quantity, t.DateCreated, t.RecordedBy, t.Notes 
                        FROM InventoryTransactions t 
@@ -1322,8 +1394,8 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<Supplier>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT SupplierID, SupplierName, ContactInformation, Status, CreatedAt, UpdatedAt FROM Suppliers ORDER BY SupplierID DESC";
+        conn.OpenWithRetry();
+        string sql = "SELECT SupplierID, SupplierName, ContactInformation, Status, CreatedAt, UpdatedAt FROM Suppliers WHERE Status = 'ACTIVE' ORDER BY SupplierID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -1344,7 +1416,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddSupplier(Supplier supp)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"INSERT INTO Suppliers (SupplierName, ContactInformation, Status, CreatedAt)
                        VALUES (@SupplierName, @ContactInfo, @Status, GETDATE());
                        SELECT SCOPE_IDENTITY();";
@@ -1359,7 +1431,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateSupplier(Supplier supp)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"UPDATE Suppliers 
                        SET SupplierName = @SupplierName, ContactInformation = @ContactInfo, 
                            Status = @Status, UpdatedAt = GETDATE()
@@ -1376,7 +1448,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteSupplier(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Suppliers SET Status = 'INACTIVE' WHERE SupplierID = @SupplierID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@SupplierID", id);
@@ -1388,8 +1460,8 @@ public class SqlDataRepository : ISqlDataRepository
     {
         var list = new List<Branch>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT BranchID, BranchName, Address, ContactInformation, Status, CreatedAt, UpdatedAt FROM Branches ORDER BY BranchID DESC";
+        conn.OpenWithRetry();
+        string sql = "SELECT BranchID, BranchName, Address, ContactInformation, Status, CreatedAt, UpdatedAt FROM Branches WHERE Status = 'ACTIVE' ORDER BY BranchID DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -1411,7 +1483,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void AddBranch(Branch branch)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"INSERT INTO Branches (BranchName, Address, ContactInformation, Status, CreatedAt)
                        VALUES (@BranchName, @Address, @ContactInfo, @Status, GETDATE());
                        SELECT SCOPE_IDENTITY();";
@@ -1427,7 +1499,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void UpdateBranch(Branch branch)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = @"UPDATE Branches 
                        SET BranchName = @BranchName, Address = @Address, 
                            ContactInformation = @ContactInfo, Status = @Status, UpdatedAt = GETDATE()
@@ -1445,7 +1517,7 @@ public class SqlDataRepository : ISqlDataRepository
     public void DeleteBranch(int id)
     {
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         string sql = "UPDATE Branches SET Status = 'INACTIVE' WHERE BranchID = @BranchID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@BranchID", id);
@@ -1456,69 +1528,125 @@ public class SqlDataRepository : ISqlDataRepository
     public List<SystemLog> GetSystemLogs()
     {
         var list = new List<SystemLog>();
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT LogID, Timestamp, LogLevel, Module, Message, ActionBy FROM SystemLogs ORDER BY Timestamp DESC";
-        using var cmd = new SqlCommand(sql, conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        try
         {
-            list.Add(new SystemLog
+            using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+            string sql = "SELECT LogID, Timestamp, LogLevel, Module, Message, ActionBy FROM SystemLogs ORDER BY Timestamp DESC";
+            using var cmd = new SqlCommand(sql, conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                Id = reader.GetInt32(reader.GetOrdinal("LogID")),
-                Timestamp = reader.GetDateTime(reader.GetOrdinal("Timestamp")),
-                LogLevel = reader.GetString(reader.GetOrdinal("LogLevel")),
-                Module = reader.GetString(reader.GetOrdinal("Module")),
-                Message = reader.GetString(reader.GetOrdinal("Message")),
-                ActionBy = reader.GetString(reader.GetOrdinal("ActionBy"))
-            });
+                list.Add(new SystemLog
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("LogID")),
+                    Timestamp = reader.GetDateTime(reader.GetOrdinal("Timestamp")),
+                    LogLevel = reader.GetString(reader.GetOrdinal("LogLevel")),
+                    Module = reader.GetString(reader.GetOrdinal("Module")),
+                    Message = reader.GetString(reader.GetOrdinal("Message")),
+                    ActionBy = reader.GetString(reader.GetOrdinal("ActionBy"))
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GetSystemLogs] Warning: {ex.Message}");
         }
         return list;
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentQueue<SystemLog> _offlineLogs = new();
+
     public void AddSystemLog(string level, string module, string message, string actionBy)
     {
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = @"INSERT INTO SystemLogs (Timestamp, LogLevel, Module, Message, ActionBy)
-                       VALUES (GETDATE(), @Level, @Module, @Message, @ActionBy)";
-        using var cmd = new SqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@Level", level ?? "INFO");
-        cmd.Parameters.AddWithValue("@Module", module ?? "System");
-        cmd.Parameters.AddWithValue("@Message", message ?? "");
-        cmd.Parameters.AddWithValue("@ActionBy", actionBy ?? "System");
-        cmd.ExecuteNonQuery();
+        var log = new SystemLog
+        {
+            Timestamp = DateTime.Now,
+            LogLevel = level ?? "INFO",
+            Module = module ?? "System",
+            Message = message ?? "",
+            ActionBy = actionBy ?? "System"
+        };
+
+        _offlineLogs.Enqueue(log);
+        FlushOfflineLogs();
+    }
+
+    private int _isFlushingLogs = 0;
+
+    private void FlushOfflineLogs()
+    {
+        if (_offlineLogs.IsEmpty) return;
+        if (System.Threading.Interlocked.CompareExchange(ref _isFlushingLogs, 1, 0) != 0) return;
+
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            try
+            {
+                using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+                while (_offlineLogs.TryPeek(out var log))
+                {
+                    string sql = @"INSERT INTO SystemLogs (Timestamp, LogLevel, Module, Message, ActionBy)
+                                   VALUES (@Timestamp, @Level, @Module, @Message, @ActionBy)";
+                    using var cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@Timestamp", log.Timestamp);
+                    cmd.Parameters.AddWithValue("@Level", log.LogLevel);
+                    cmd.Parameters.AddWithValue("@Module", log.Module);
+                    cmd.Parameters.AddWithValue("@Message", log.Message);
+                    cmd.Parameters.AddWithValue("@ActionBy", log.ActionBy);
+                    cmd.ExecuteNonQuery();
+
+                    _offlineLogs.TryDequeue(out _); // Remove from queue only if successful
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FlushOfflineLogs] Could not reach DB, keeping {_offlineLogs.Count} logs in offline queue. Error: {ex.Message}");
+            }
+            finally
+            {
+                System.Threading.Interlocked.Exchange(ref _isFlushingLogs, 0);
+                if (!_offlineLogs.IsEmpty)
+                {
+                    FlushOfflineLogs(); // trigger again if more were added while flushing
+                }
+            }
+        });
     }
 
     public List<SupportRequest> GetSupportRequests()
     {
         var list = new List<SupportRequest>();
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
-        string sql = "SELECT SupportID, TicketNumber, RequestedBy, Subject, Details, Priority, Status, CreatedDate FROM SupportRequests ORDER BY SupportID DESC";
-        using var cmd = new SqlCommand(sql, conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        try
         {
-            list.Add(new SupportRequest
+            using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+            string sql = "SELECT SupportID, TicketNumber, RequestedBy, Subject, Details, Priority, Status, CreatedDate FROM SupportRequests ORDER BY SupportID DESC";
+            using var cmd = new SqlCommand(sql, conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-                Id = reader.GetInt32(reader.GetOrdinal("SupportID")),
-                TicketNumber = reader.GetString(reader.GetOrdinal("TicketNumber")),
-                RequestedBy = reader.GetString(reader.GetOrdinal("RequestedBy")),
-                Subject = reader.GetString(reader.GetOrdinal("Subject")),
-                Details = reader.IsDBNull(reader.GetOrdinal("Details")) ? "" : reader.GetString(reader.GetOrdinal("Details")),
-                Priority = reader.GetString(reader.GetOrdinal("Priority")),
-                Status = reader.GetString(reader.GetOrdinal("Status")),
-                CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
-            });
+                list.Add(new SupportRequest
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("SupportID")),
+                    TicketNumber = reader.GetString(reader.GetOrdinal("TicketNumber")),
+                    RequestedBy = reader.GetString(reader.GetOrdinal("RequestedBy")),
+                    Subject = reader.GetString(reader.GetOrdinal("Subject")),
+                    Details = reader.IsDBNull(reader.GetOrdinal("Details")) ? "" : reader.GetString(reader.GetOrdinal("Details")),
+                    Priority = reader.GetString(reader.GetOrdinal("Priority")),
+                    Status = reader.GetString(reader.GetOrdinal("Status")),
+                    CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate"))
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GetSupportRequests] Warning: {ex.Message}");
         }
         return list;
     }
 
     public void AddSupportRequest(SupportRequest req)
     {
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        using var conn = TenantConnectionFactory.GetMasterOpenConnection();
         string ticket = $"TKT-{8000 + Random.Shared.Next(100, 999)}";
         string sql = @"INSERT INTO SupportRequests (TicketNumber, RequestedBy, Subject, Details, Priority, Status, CreatedDate)
                        VALUES (@TicketNumber, @RequestedBy, @Subject, @Details, @Priority, 'Open', GETDATE());
@@ -1536,9 +1664,7 @@ public class SqlDataRepository : ISqlDataRepository
 
     public void UpdateSupportRequestStatus(int id, string status)
     {
-        EnsureNotSuperAdmin();
-        using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        using var conn = TenantConnectionFactory.GetMasterOpenConnection();
         string sql = "UPDATE SupportRequests SET Status = @Status WHERE SupportID = @ID";
         using var cmd = new SqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@Status", status);
@@ -1620,10 +1746,17 @@ public class SqlDataRepository : ISqlDataRepository
         EnsureNotSuperAdmin();
         var list = new List<Appointment>();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         EnsureAppointmentSchema(conn);
-        string sql = @"SELECT AppointmentID, AppointmentNumber, CustomerID, CustomerName, ServiceID, ServiceName, BarberID, BarberName, ScheduledAt, Status, Notes, CreatedDate
-                       FROM Appointments ORDER BY ScheduledAt DESC";
+        string sql = @"SELECT a.AppointmentID, a.AppointmentNumber, a.CustomerID, 
+                              COALESCE(LTRIM(RTRIM(c.FirstName + ' ' + c.LastName)), a.CustomerName) AS CustomerName, 
+                              a.ServiceID, a.ServiceName, a.BarberID, 
+                              COALESCE(LTRIM(RTRIM(e.FirstName + ' ' + e.LastName)), a.BarberName) AS BarberName, 
+                              a.ScheduledAt, a.Status, a.Notes, a.CreatedDate
+                       FROM Appointments a
+                       LEFT JOIN Customers c ON a.CustomerID = c.CustomerID
+                       LEFT JOIN Employees e ON a.BarberID = e.EmployeeID
+                       ORDER BY a.ScheduledAt DESC";
         using var cmd = new SqlCommand(sql, conn);
         using var reader = cmd.ExecuteReader();
         while (reader.Read())
@@ -1651,7 +1784,7 @@ public class SqlDataRepository : ISqlDataRepository
     {
         EnsureNotSuperAdmin();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         EnsureAppointmentSchema(conn);
         appointment.AppointmentNumber = GenerateAppointmentNumber();
         string sql = @"INSERT INTO Appointments (AppointmentNumber, CustomerID, CustomerName, ServiceID, ServiceName, BarberID, BarberName, ScheduledAt, Status, Notes, CreatedDate)
@@ -1675,7 +1808,7 @@ public class SqlDataRepository : ISqlDataRepository
     {
         EnsureNotSuperAdmin();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         EnsureAppointmentSchema(conn);
         string sql = @"UPDATE Appointments SET CustomerID=@CustID, CustomerName=@CustName, ServiceID=@SvcID, ServiceName=@SvcName,
                         BarberID=@BarbID, BarberName=@BarbName, ScheduledAt=@When, Notes=@Notes
@@ -1697,7 +1830,7 @@ public class SqlDataRepository : ISqlDataRepository
     {
         EnsureNotSuperAdmin();
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         EnsureAppointmentSchema(conn);
         string sql = "UPDATE Appointments SET Status = @Status WHERE AppointmentID = @ID";
         using var cmd = new SqlCommand(sql, conn);
@@ -1737,12 +1870,12 @@ public class SqlDataRepository : ISqlDataRepository
         };
 
         using var conn = TenantConnectionFactory.GetConnection();
-        conn.Open();
+        conn.OpenWithRetry();
         EnsureAppointmentSchema(conn);
+        try { EnsureLoyaltySchema(conn); } catch { }
         using var dbTxn = conn.BeginTransaction();
         try
         {
-            EnsureLoyaltySchema(conn, dbTxn);
             SaveTransactionCore(txn, conn, dbTxn);
             using var cmd = new SqlCommand("UPDATE Appointments SET Status = 'CheckedIn' WHERE AppointmentID = @ID", conn, dbTxn);
             cmd.Parameters.AddWithValue("@ID", appointment.Id);
@@ -1756,5 +1889,158 @@ public class SqlDataRepository : ISqlDataRepository
         }
         appointment.Status = AppointmentStatus.CheckedIn;
         return txn;
+    }
+
+    // ==================== SUBSCRIPTION MANAGEMENT (SuperAdmin / Master DB) ====================
+
+    public List<TenantSubscription> GetTenantSubscriptions()
+    {
+        var list = new List<TenantSubscription>();
+        try
+        {
+            using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+            string sql = @"SELECT SubscriptionID, TenantID, CompanyName, DatabaseName, PlanName, MonthlyFee,
+                                  StartDate, ExpiryDate, Status, PaymentStatus, PaymentMethod, LastPaidDate, Notes
+                           FROM TenantSubscriptions ORDER BY TenantID";
+            using var cmd = new SqlCommand(sql, conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new TenantSubscription
+                {
+                    SubscriptionID  = reader.GetInt32(reader.GetOrdinal("SubscriptionID")),
+                    TenantID        = reader.GetInt32(reader.GetOrdinal("TenantID")),
+                    CompanyName     = reader.GetString(reader.GetOrdinal("CompanyName")),
+                    DatabaseName    = reader.GetString(reader.GetOrdinal("DatabaseName")),
+                    PlanName        = reader.GetString(reader.GetOrdinal("PlanName")),
+                    MonthlyFee      = reader.GetDecimal(reader.GetOrdinal("MonthlyFee")),
+                    StartDate       = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                    ExpiryDate      = reader.GetDateTime(reader.GetOrdinal("ExpiryDate")),
+                    Status          = reader.GetString(reader.GetOrdinal("Status")),
+                    PaymentStatus   = reader.GetString(reader.GetOrdinal("PaymentStatus")),
+                    PaymentMethod   = reader.GetString(reader.GetOrdinal("PaymentMethod")),
+                    LastPaidDate    = reader.IsDBNull(reader.GetOrdinal("LastPaidDate")) ? null : reader.GetDateTime(reader.GetOrdinal("LastPaidDate")),
+                    Notes           = reader.IsDBNull(reader.GetOrdinal("Notes")) ? "" : reader.GetString(reader.GetOrdinal("Notes"))
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[GetTenantSubscriptions] Warning: {ex.Message}");
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// SuperAdmin sets a tenant's subscription status to Active, Suspended, or Expired.
+    /// When Suspended/Expired, the tenant's login will be blocked at the login screen.
+    /// </summary>
+    public void UpdateSubscriptionStatus(int tenantId, string status, string notes)
+    {
+        try
+        {
+            using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+            string sql = @"UPDATE TenantSubscriptions 
+                           SET Status = @Status, Notes = @Notes
+                           WHERE TenantID = @TenantID";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Status", status);
+            cmd.Parameters.AddWithValue("@Notes", notes ?? "");
+            cmd.Parameters.AddWithValue("@TenantID", tenantId);
+            cmd.ExecuteNonQuery();
+
+            AddSystemLog("WARN", "Subscriptions",
+                $"Tenant {tenantId} subscription status changed to '{status}'. Notes: {notes}",
+                "superadmin");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[UpdateSubscriptionStatus] Warning: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// SuperAdmin renews a tenant's subscription after receiving payment.
+    /// Extends ExpiryDate, marks PaymentStatus = Paid, and records payment date.
+    /// </summary>
+    public void RenewSubscription(int tenantId, string planName, decimal monthlyFee, int monthsToAdd, string paymentMethod)
+    {
+        try
+        {
+            using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+            string sql = @"UPDATE TenantSubscriptions 
+                           SET PlanName       = @PlanName,
+                               MonthlyFee     = @MonthlyFee,
+                               ExpiryDate     = DATEADD(month, @Months, 
+                                                  CASE WHEN ExpiryDate < GETDATE() THEN GETDATE() ELSE ExpiryDate END),
+                               Status         = 'Active',
+                               PaymentStatus  = 'Paid',
+                               PaymentMethod  = @PaymentMethod,
+                               LastPaidDate   = GETDATE(),
+                               Notes          = 'Renewed by SuperAdmin on ' + CONVERT(NVARCHAR,GETDATE(),107)
+                           WHERE TenantID = @TenantID";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@PlanName", planName);
+            cmd.Parameters.AddWithValue("@MonthlyFee", monthlyFee);
+            cmd.Parameters.AddWithValue("@Months", monthsToAdd);
+            cmd.Parameters.AddWithValue("@PaymentMethod", paymentMethod);
+            cmd.Parameters.AddWithValue("@TenantID", tenantId);
+            cmd.ExecuteNonQuery();
+
+            AddSystemLog("INFO", "Subscriptions",
+                $"Tenant {tenantId} subscription renewed — Plan: {planName}, Fee: ₱{monthlyFee:N2}, +{monthsToAdd} month(s), via {paymentMethod}.",
+                "superadmin");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[RenewSubscription] Warning: {ex.Message}");
+            throw;
+        }
+    }
+    public int AddNewTenant(string companyName, string dbName, string dbPassword, string planName, decimal monthlyFee)
+    {
+        using var conn = TenantConnectionFactory.GetMasterOpenConnection();
+        using var trans = conn.BeginTransaction();
+        try
+        {
+            string serverStr = $"{dbName}.public.databaseasp.net";
+            
+            // 1. Add to Registry
+            string sqlReg = "INSERT INTO TenantRegistry (TenantName, DatabaseName, ConnectionServer, Status) OUTPUT INSERTED.TenantID VALUES (@Name, @DB, @Server, 'ACTIVE')";
+            using var cmdReg = new SqlCommand(sqlReg, conn, trans);
+            cmdReg.Parameters.AddWithValue("@Name", companyName);
+            cmdReg.Parameters.AddWithValue("@DB", dbName);
+            cmdReg.Parameters.AddWithValue("@Server", serverStr);
+            int newTenantId = (int)cmdReg.ExecuteScalar();
+
+            // 2. Add to Subscriptions
+            string sqlSub = @"INSERT INTO TenantSubscriptions (TenantID, CompanyName, DatabaseName, PlanName, MonthlyFee, Status, ExpiryDate, LastPaidDate) 
+                              VALUES (@TID, @Name, @DB, @Plan, @Fee, 'Active', DATEADD(month, 1, GETDATE()), GETDATE())";
+            using var cmdSub = new SqlCommand(sqlSub, conn, trans);
+            cmdSub.Parameters.AddWithValue("@TID", newTenantId);
+            cmdSub.Parameters.AddWithValue("@Name", companyName);
+            cmdSub.Parameters.AddWithValue("@DB", dbName);
+            cmdSub.Parameters.AddWithValue("@Plan", planName);
+            cmdSub.Parameters.AddWithValue("@Fee", monthlyFee);
+            cmdSub.ExecuteNonQuery();
+
+            trans.Commit();
+            AddSystemLog("INFO", "Tenants", $"Created new tenant ID {newTenantId} ({companyName}) on DB {dbName}", "superadmin");
+            
+            // 3. Register connection string dynamically
+            string connStr = $"Server={dbName}.public.databaseasp.net; Database={dbName}; User Id={dbName}; Password={dbPassword}; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True; Connect Timeout=15;";
+            TenantConnectionFactory.RegisterTenantConnection(newTenantId, connStr);
+
+            // 4. Force schema initialization (creates tables on the MonsterASP database)
+            using var newTenantConn = TenantConnectionFactory.GetOpenConnection(newTenantId);
+
+            return newTenantId;
+        }
+        catch
+        {
+            trans.Rollback();
+            throw;
+        }
     }
 }

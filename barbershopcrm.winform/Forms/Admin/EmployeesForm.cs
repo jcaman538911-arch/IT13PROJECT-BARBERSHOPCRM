@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.domain;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
@@ -25,14 +26,18 @@ public partial class EmployeesForm : Form
         cmbPosition.DataSource = Enum.GetValues(typeof(EmployeePosition));
     }
 
-    private void LoadEmployees(string query = "")
+    private async void LoadEmployees(string query = "")
     {
-        var employees = SqlDataRepository.Instance.GetEmployees();
-        if (!string.IsNullOrWhiteSpace(query))
+        var employees = await Task.Run(() => 
         {
-            query = query.ToLower();
-            employees = employees.Where(e => e.Name.ToLower().Contains(query) || e.ContactNumber.Contains(query)).ToList();
-        }
+            var data = SqlDataRepository.Instance.GetEmployees(includeInactive: true);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var q = query.ToLower();
+                data = data.Where(e => e.Name.StartsWith(q, StringComparison.OrdinalIgnoreCase) || e.ContactNumber.StartsWith(q)).ToList();
+            }
+            return data;
+        });
 
         dgvEmployees.DataSource = employees.Select(e => new
         {
@@ -46,20 +51,27 @@ public partial class EmployeesForm : Form
 
     private void dgvEmployees_SelectionChanged(object sender, EventArgs e)
     {
-        if (dgvEmployees.CurrentRow != null && dgvEmployees.CurrentRow.DataBoundItem != null)
-        {
-            dynamic item = dgvEmployees.CurrentRow.DataBoundItem;
-            _selectedEmployeeId = item.Id;
+        if (dgvEmployees.CurrentRow?.DataBoundItem == null) return;
 
-            var emp = SqlDataRepository.Instance.GetEmployees().FirstOrDefault(e => e.Id == _selectedEmployeeId);
-            if (emp != null)
-            {
-                txtName.Text = emp.Name;
-                txtContact.Text = emp.ContactNumber;
-                cmbPosition.SelectedItem = emp.Position;
-                chkActive.Checked = emp.IsActive;
-            }
+        dynamic item = dgvEmployees.CurrentRow.DataBoundItem;
+        _selectedEmployeeId = item.Id;
+
+        var emp = SqlDataRepository.Instance.GetEmployees(includeInactive: true).FirstOrDefault(e => e.Id == _selectedEmployeeId);
+        if (emp != null)
+        {
+            txtName.Text = emp.Name;
+            txtContact.Text = emp.ContactNumber;
+            cmbPosition.SelectedItem = emp.Position;
+            chkActive.Checked = emp.IsActive;
         }
+    }
+
+    // Reads the selected row's ID directly from the grid — more reliable than _selectedEmployeeId alone.
+    private int GetCurrentRowId()
+    {
+        if (dgvEmployees.CurrentRow?.DataBoundItem == null) return _selectedEmployeeId;
+        dynamic item = dgvEmployees.CurrentRow.DataBoundItem;
+        return item.Id;
     }
 
     private void btnAdd_Click(object sender, EventArgs e)
@@ -117,17 +129,18 @@ public partial class EmployeesForm : Form
 
     private void btnDelete_Click(object sender, EventArgs e)
     {
-        if (_selectedEmployeeId == 0)
+        int id = GetCurrentRowId();
+        if (id == 0)
         {
             MessageBox.Show("Please select an employee to delete.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        var result = MessageBox.Show($"Are you sure you want to delete employee ID {_selectedEmployeeId}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        var result = MessageBox.Show($"Are you sure you want to delete employee ID {id}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
         if (result == DialogResult.Yes)
         {
-            SqlDataRepository.Instance.DeleteEmployee(_selectedEmployeeId);
-            SqlDataRepository.Instance.AddSystemLog("WARN", "Employees", $"Deleted employee ID {_selectedEmployeeId}", "admin");
+            SqlDataRepository.Instance.DeleteEmployee(id);
+            SqlDataRepository.Instance.AddSystemLog("WARN", "Employees", $"Deleted employee ID {id}", "admin");
             MessageBox.Show("Employee deleted successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
             ClearForm();
             LoadEmployees();

@@ -28,33 +28,26 @@ partial class LoginForm
         txtPassword = new TextBox();
         btnTogglePassword = new Button();
         btnLogin = new Button();
-
         lblDemoAccessTrigger = new Label();
-
         pnlDemoPopup = new Panel();
         lblDemoHeader = new Label();
         btnCloseDemo = new Button();
-        
         lblPlatformHeader = new Label();
         btnDemoSuperAdmin = new Button();
-
         lblCompany1Header = new Label();
         btnDemoCompany1Owner = new Button();
         btnDemoCompany1Staff = new Button();
-
         lblCompany2Header = new Label();
         btnDemoCompany2Owner = new Button();
         btnDemoCompany2Staff = new Button();
-
         lblCompany3Header = new Label();
         btnDemoCompany3Owner = new Button();
         btnDemoCompany3Staff = new Button();
-
         pnlBackground.SuspendLayout();
         pnlDemoPopup.SuspendLayout();
         SuspendLayout();
         // 
-        // pnlBackground (Main Centered Login Card)
+        // pnlBackground
         // 
         pnlBackground.BackColor = Color.FromArgb(243, 235, 221);
         pnlBackground.BorderStyle = BorderStyle.FixedSingle;
@@ -76,9 +69,9 @@ partial class LoginForm
         // 
         lblBrandTitle.Font = new Font("Georgia", 18F, FontStyle.Bold);
         lblBrandTitle.ForeColor = Color.FromArgb(23, 23, 23);
-        lblBrandTitle.Location = new Point(15, 20);
+        lblBrandTitle.Location = new Point(15, 16);
         lblBrandTitle.Name = "lblBrandTitle";
-        lblBrandTitle.Size = new Size(368, 60);
+        lblBrandTitle.Size = new Size(368, 66);
         lblBrandTitle.TabIndex = 0;
         lblBrandTitle.Text = "✂ UPPERCUT\r\nBARBER SHOP";
         lblBrandTitle.TextAlign = ContentAlignment.MiddleCenter;
@@ -173,21 +166,21 @@ partial class LoginForm
         btnLogin.UseVisualStyleBackColor = false;
         btnLogin.Click += btnLogin_Click;
         // 
-        // lblDemoAccessTrigger (Discreet Bottom-Right Control)
+        // lblDemoAccessTrigger
         // 
         lblDemoAccessTrigger.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
         lblDemoAccessTrigger.AutoSize = true;
         lblDemoAccessTrigger.Cursor = Cursors.Hand;
         lblDemoAccessTrigger.Font = new Font("Segoe UI", 8.5F);
         lblDemoAccessTrigger.ForeColor = Color.FromArgb(140, 130, 120);
-        lblDemoAccessTrigger.Location = new Point(440, 520);
+        lblDemoAccessTrigger.Location = new Point(1142, 520);
         lblDemoAccessTrigger.Name = "lblDemoAccessTrigger";
-        lblDemoAccessTrigger.Size = new Size(95, 20);
+        lblDemoAccessTrigger.Size = new Size(123, 20);
         lblDemoAccessTrigger.TabIndex = 1;
         lblDemoAccessTrigger.Text = "⚙ Demo Access";
         lblDemoAccessTrigger.Click += lblDemoAccessTrigger_Click;
         // 
-        // pnlDemoPopup (Hidden Collapsible Panel)
+        // pnlDemoPopup
         // 
         pnlDemoPopup.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
         pnlDemoPopup.BackColor = Color.FromArgb(248, 244, 236);
@@ -205,7 +198,7 @@ partial class LoginForm
         pnlDemoPopup.Controls.Add(lblCompany3Header);
         pnlDemoPopup.Controls.Add(btnDemoCompany3Owner);
         pnlDemoPopup.Controls.Add(btnDemoCompany3Staff);
-        pnlDemoPopup.Location = new Point(230, 90);
+        pnlDemoPopup.Location = new Point(932, 90);
         pnlDemoPopup.Name = "pnlDemoPopup";
         pnlDemoPopup.Size = new Size(300, 425);
         pnlDemoPopup.TabIndex = 2;
@@ -242,7 +235,7 @@ partial class LoginForm
         lblPlatformHeader.ForeColor = Color.FromArgb(130, 120, 110);
         lblPlatformHeader.Location = new Point(12, 38);
         lblPlatformHeader.Name = "lblPlatformHeader";
-        lblPlatformHeader.Size = new Size(70, 17);
+        lblPlatformHeader.Size = new Size(76, 17);
         lblPlatformHeader.TabIndex = 2;
         lblPlatformHeader.Text = "PLATFORM";
         // 
@@ -269,7 +262,7 @@ partial class LoginForm
         lblCompany1Header.ForeColor = Color.FromArgb(130, 120, 110);
         lblCompany1Header.Location = new Point(12, 95);
         lblCompany1Header.Name = "lblCompany1Header";
-        lblCompany1Header.Size = new Size(82, 17);
+        lblCompany1Header.Size = new Size(71, 17);
         lblCompany1Header.TabIndex = 4;
         lblCompany1Header.Text = "TENANT 1";
         // 
@@ -312,7 +305,7 @@ partial class LoginForm
         lblCompany2Header.ForeColor = Color.FromArgb(130, 120, 110);
         lblCompany2Header.Location = new Point(12, 185);
         lblCompany2Header.Name = "lblCompany2Header";
-        lblCompany2Header.Size = new Size(82, 17);
+        lblCompany2Header.Size = new Size(71, 17);
         lblCompany2Header.TabIndex = 7;
         lblCompany2Header.Text = "TENANT 2";
         // 
@@ -355,7 +348,7 @@ partial class LoginForm
         lblCompany3Header.ForeColor = Color.FromArgb(130, 120, 110);
         lblCompany3Header.Location = new Point(12, 275);
         lblCompany3Header.Name = "lblCompany3Header";
-        lblCompany3Header.Size = new Size(82, 17);
+        lblCompany3Header.Size = new Size(71, 17);
         lblCompany3Header.TabIndex = 10;
         lblCompany3Header.Text = "TENANT 3";
         // 
@@ -396,7 +389,7 @@ partial class LoginForm
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.FromArgb(243, 235, 221);
-        ClientSize = new Size(550, 600);
+        ClientSize = new Size(1252, 600);
         Controls.Add(pnlDemoPopup);
         Controls.Add(lblDemoAccessTrigger);
         Controls.Add(pnlBackground);

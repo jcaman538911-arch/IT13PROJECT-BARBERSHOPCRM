@@ -40,6 +40,7 @@ partial class PaymentForm
         lblNewBalanceValue = new Label();
         pnlLoyaltySection = new Panel();
         btnConfirmPayment = new Button();
+        btnNoReceipt = new Button();
         btnCancel = new Button();
         ((System.ComponentModel.ISupportInitialize)numAmountReceived).BeginInit();
         ((System.ComponentModel.ISupportInitialize)numPointsToEarn).BeginInit();
@@ -136,7 +137,9 @@ partial class PaymentForm
         // cmbPaymentMethod
         // 
         cmbPaymentMethod.BackColor = Color.White;
-        cmbPaymentMethod.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbPaymentMethod.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbPaymentMethod.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbPaymentMethod.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbPaymentMethod.Font = new Font("Segoe UI", 10F);
         cmbPaymentMethod.ForeColor = ThemeHelper.TextPrimary;
         cmbPaymentMethod.FormattingEnabled = true;
@@ -280,9 +283,25 @@ partial class PaymentForm
         btnConfirmPayment.Name = "btnConfirmPayment";
         btnConfirmPayment.Size = new Size(170, 42);
         btnConfirmPayment.TabIndex = 22;
-        btnConfirmPayment.Text = "✓ Complete & Pay";
+        btnConfirmPayment.Text = "✓ Print Receipt";
         btnConfirmPayment.UseVisualStyleBackColor = false;
         btnConfirmPayment.Click += btnConfirmPayment_Click;
+        // 
+        // btnNoReceipt
+        // 
+        btnNoReceipt.BackColor = ThemeHelper.WarmIvory;
+        btnNoReceipt.FlatAppearance.BorderSize = 1;
+        btnNoReceipt.FlatAppearance.BorderColor = ThemeHelper.PrimaryNavy;
+        btnNoReceipt.FlatStyle = FlatStyle.Flat;
+        btnNoReceipt.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btnNoReceipt.ForeColor = ThemeHelper.PrimaryNavy;
+        btnNoReceipt.Location = new Point(220, 465);
+        btnNoReceipt.Name = "btnNoReceipt";
+        btnNoReceipt.Size = new Size(170, 42);
+        btnNoReceipt.TabIndex = 24;
+        btnNoReceipt.Text = "✓ Quick Pay";
+        btnNoReceipt.UseVisualStyleBackColor = false;
+        btnNoReceipt.Click += btnNoReceipt_Click;
         // 
         // btnCancel
         // 
@@ -291,9 +310,9 @@ partial class PaymentForm
         btnCancel.FlatStyle = FlatStyle.Flat;
         btnCancel.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         btnCancel.ForeColor = ThemeHelper.TextPrimary;
-        btnCancel.Location = new Point(220, 465);
+        btnCancel.Location = new Point(30, 515);
         btnCancel.Name = "btnCancel";
-        btnCancel.Size = new Size(170, 42);
+        btnCancel.Size = new Size(360, 42);
         btnCancel.TabIndex = 23;
         btnCancel.Text = "Cancel";
         btnCancel.UseVisualStyleBackColor = false;
@@ -304,8 +323,9 @@ partial class PaymentForm
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = ThemeHelper.CardBackground;
-        ClientSize = new Size(420, 530);
+        ClientSize = new Size(420, 580);
         Controls.Add(btnCancel);
+        Controls.Add(btnNoReceipt);
         Controls.Add(btnConfirmPayment);
         Controls.Add(pnlLoyaltySection);
         Controls.Add(lblChangeValue);
@@ -362,5 +382,6 @@ partial class PaymentForm
     private Label lblNewBalanceValue;
     private Panel pnlLoyaltySection;
     private Button btnConfirmPayment;
+    private Button btnNoReceipt;
     private Button btnCancel;
 }

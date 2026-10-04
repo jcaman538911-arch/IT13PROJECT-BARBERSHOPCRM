@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using System.Threading.Tasks;
 using barbershop.domain;
 using barbershop.infrastructure;
 using BarberShopCRM.Helpers;
@@ -20,15 +21,23 @@ public partial class SuperAdminDashboardForm : Form
         LoadMetricsAndLogs();
     }
 
-    private void LoadMetricsAndLogs()
+    private async void LoadMetricsAndLogs()
     {
-        var users = SqlDataRepository.Instance.GetUsers();
+        var (users, supportCount, logs) = await Task.Run(() => 
+        {
+            return (
+                SqlDataRepository.Instance.GetUsers(),
+                SqlDataRepository.Instance.GetSupportRequests().Count(r => r.Status != "Resolved"),
+                SqlDataRepository.Instance.GetSystemLogs()
+            );
+        });
+
         lblCard1Value.Text = users.Count.ToString();
         lblCard2Value.Text = users.Count(u => u.Role == UserRole.Admin).ToString();
         lblCard3Value.Text = "ONLINE";
-        lblCard4Value.Text = SqlDataRepository.Instance.GetSupportRequests().Count(r => r.Status != "Resolved").ToString();
+        lblCard4Value.Text = supportCount.ToString();
 
-        dgvSystemLogs.DataSource = SqlDataRepository.Instance.GetSystemLogs()
+        dgvSystemLogs.DataSource = logs
             .Select(l => new
             {
                 l.Id,

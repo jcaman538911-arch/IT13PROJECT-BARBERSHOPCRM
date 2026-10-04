@@ -132,7 +132,9 @@ partial class InventoryManagementForm
 
         cmbSupplier.Location = new Point(15, 258);
         cmbSupplier.Size = new Size(320, 26);
-        cmbSupplier.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbSupplier.DropDownStyle = ComboBoxStyle.DropDown;
+        cmbSupplier.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+        cmbSupplier.AutoCompleteSource = AutoCompleteSource.ListItems;
         cmbSupplier.Font = BarberShopCRM.Helpers.ThemeHelper.BodyFont;
 
         btnAdd.Text = "Add Item";

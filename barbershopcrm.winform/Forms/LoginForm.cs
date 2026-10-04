@@ -145,9 +145,36 @@ public partial class LoginForm : Form
         var user = SqlDataRepository.Instance.Authenticate(username, password);
         if (user == null)
         {
+            SqlDataRepository.Instance.AddSystemLog("WARN", "Auth", $"Failed login attempt for username '{username}'.", "System");
             MessageBox.Show("Invalid username or password. Please try again.", "Authentication Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
+
+        // ── Subscription Guard ──────────────────────────────────────────────────────
+        // SuperAdmin is always allowed. For all other roles, check the tenant's subscription.
+        if (user.Role != barbershop.domain.UserRole.SuperAdmin && user.TenantId.HasValue)
+        {
+            var (isActive, subStatus, expiryDate) = barbershop.infrastructure.TenantConnectionFactory.CheckTenantSubscription(user.TenantId.Value);
+            if (!isActive)
+            {
+                string expiredMsg = subStatus == "Suspended"
+                    ? $"⚠️ Your company's system access has been SUSPENDED by the Administrator.\n\n" +
+                      $"Reason: Unpaid subscription or policy violation.\n\n" +
+                      $"Please contact your system provider (SuperAdmin) to restore access."
+                    : $"⏰ Your company's subscription has EXPIRED.\n\n" +
+                      $"Expiry Date: {expiryDate:MMMM dd, yyyy}\n\n" +
+                      $"Please contact the SuperAdmin to renew your subscription and restore system access.";
+
+                MessageBox.Show(expiredMsg, "Access Denied — Subscription Issue",
+                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+
+                SqlDataRepository.Instance.AddSystemLog("WARN", "Auth",
+                    $"Blocked login for '{user.Username}' (Tenant {user.TenantId}) — Subscription status: {subStatus}, Expired: {expiryDate:yyyy-MM-dd}",
+                    "System");
+                return;
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────────────
 
         SqlDataRepository.Instance.AddSystemLog("INFO", "Auth", $"User '{user.Username}' logged in successfully as {user.Role}.", user.Username);
 

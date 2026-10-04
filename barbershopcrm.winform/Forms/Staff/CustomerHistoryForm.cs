@@ -17,8 +17,49 @@ public partial class CustomerHistoryForm : Form
         ResponsiveLayoutHelper.Apply(this);
         ThemeHelper.ApplyModernGrid(dgvHistory);
         ThemeHelper.ApplyModernGrid(dgvLoyalty);
+        ThemeHelper.ApplySearchableComboBox(cmbCustomers);
         btnLoyaltyCard.Click += btnLoyaltyCard_Click;
+        cmbCustomers.KeyDown += cmbCustomers_KeyDown;
         PopulateCustomers();
+    }
+
+    private void cmbCustomers_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Enter)
+        {
+            PerformCustomerSearch();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
+    }
+
+    private void btnFilter_Click(object? sender, EventArgs e)
+    {
+        PerformCustomerSearch();
+    }
+
+    private void PerformCustomerSearch()
+    {
+        if (cmbCustomers.SelectedValue is int custId && custId > 0)
+        {
+            LoadHistory(custId);
+            return;
+        }
+
+        string searchText = cmbCustomers.Text.Trim();
+        if (string.IsNullOrEmpty(searchText)) return;
+
+        if (cmbCustomers.DataSource is System.Collections.Generic.List<Customer> customers)
+        {
+            var match = customers.FirstOrDefault(c => c.FullName.StartsWith(searchText, StringComparison.OrdinalIgnoreCase)
+                                                   || $"{c.FirstName} {c.LastName}".StartsWith(searchText, StringComparison.OrdinalIgnoreCase)
+                                                   || (c.PhoneNumber != null && c.PhoneNumber.StartsWith(searchText)));
+            if (match != null)
+            {
+                cmbCustomers.SelectedItem = match;
+                LoadHistory(match.Id);
+            }
+        }
     }
 
     private void btnLoyaltyCard_Click(object? sender, EventArgs e)
@@ -32,8 +73,17 @@ public partial class CustomerHistoryForm : Form
 
     private void PopulateCustomers()
     {
-        var customers = SqlDataRepository.Instance.GetCustomers();
-        cmbCustomers.DataSource = customers;
+        var customers = SqlDataRepository.Instance.GetCustomers(includeInactive: true);
+        
+        // Append (Inactive) to name if needed
+        var displayList = customers.Select(c => new
+        {
+            c.Id,
+            FullName = c.Status == "INACTIVE" ? c.FullName + " (Inactive)" : c.FullName,
+            c.IsLoyaltyMember
+        }).ToList();
+
+        cmbCustomers.DataSource = displayList;
         cmbCustomers.DisplayMember = "FullName";
         cmbCustomers.ValueMember = "Id";
 
@@ -94,14 +144,6 @@ public partial class CustomerHistoryForm : Form
     }
 
     private void cmbCustomers_SelectedIndexChanged(object sender, EventArgs e)
-    {
-        if (cmbCustomers.SelectedValue is int custId)
-        {
-            LoadHistory(custId);
-        }
-    }
-
-    private void btnFilter_Click(object sender, EventArgs e)
     {
         if (cmbCustomers.SelectedValue is int custId)
         {
